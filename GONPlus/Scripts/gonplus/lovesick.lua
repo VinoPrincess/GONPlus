@@ -157,7 +157,7 @@ end
 local function hug(st, g)
     local r, p = st.r, getPawn()
     setMode(st, "hug", g)
-    pcall(function() r.Controller:StopMovement() end)
+    ctrlCall(r, function(c) c:StopMovement() end)
     if p then
         local rl, me = r:K2_GetActorLocation(), p:K2_GetActorLocation()
         local yaw = math.deg(math.atan(me.Y - rl.Y, me.X - rl.X))
@@ -198,9 +198,10 @@ local function gift(st, item, g)
 end
 
 local function rokuTick(r, g, final)
+    if not rokuSettled(r) then return end         -- только появилась: мозг ещё собирается
     local st = state(r)
     local running = false
-    pcall(function() running = r.Controller.BrainComponent:IsRunning() == true end)
+    ctrlCall(r, function(c) running = c.BrainComponent:IsRunning() == true end)
     if running then
         brainOff(r)
         log("Lovesick: the game restarted her brain - switched off again")
@@ -271,7 +272,7 @@ local function rokuTick(r, g, final)
         if g >= st.nextOrder then goTo(st, st.lastLoc or me, g) end
         if dist < HUG_DIST and g >= st.hugReady and not hiding then hug(st, g) return end
         if g - (st.lastSeen or g) > (final and 30 or 5) then
-            pcall(function() r.Controller:StopMovement() end)
+            ctrlCall(r, function(c) c:StopMovement() end)
             playLookAround(r)
             setMode(st, "look", g)
         end

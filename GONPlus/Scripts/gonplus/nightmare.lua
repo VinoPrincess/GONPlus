@@ -132,7 +132,7 @@ local function investigate(loc, radius, label)
     local cur = NM.inv[addr]
     if cur and g - cur.t < 5 then return true end                 -- не дёргаем чаще раза в 5 с
     local chasing = false
-    pcall(function() chasing = best.Controller.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
+    ctrlCall(best, function(c) chasing = c.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
     if chasing then return true end                                -- и так гонится
     brainOff(best)
     local o = origSpeeds(best)
@@ -152,7 +152,7 @@ local function invTick()
             local l = r:K2_GetActorLocation()
             local arrived = vlen(l.X - e.dest.X, l.Y - e.dest.Y, 0) < 200
             if arrived or g - e.t > 12 or rokuSeesNM(r) then
-                pcall(function() r.Controller:StopMovement() end)
+                ctrlCall(r, function(c) c:StopMovement() end)
                 if not rokuSeesNM(r) then playLookAround(r) end
                 e.looking, e.until_ = true, g + (rokuSeesNM(r) and 0 or 4)
             end

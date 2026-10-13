@@ -93,7 +93,7 @@ local function spawnStealthRoku()
     after(1500, function()
         if not valid(a) then return end
         local has = false
-        pcall(function() has = valid(a.Controller) end)
+        has = aiCtrl(a) ~= nil
         if not has then pcall(function() a:SpawnDefaultController() end) end
     end)
     return true
@@ -148,7 +148,7 @@ stealthStop = function(result)
     if not ST.caught then
         for _, a in ipairs(ST.extras) do
             if valid(a) then
-                pcall(function() if valid(a.Controller) then a.Controller:K2_DestroyActor() end end)
+                ctrlCall(a, function(c) c:K2_DestroyActor() end)
                 pcall(function() a:K2_DestroyActor() end)
             end
         end
@@ -171,7 +171,7 @@ local function stealthCaught(r, why, text)
     setPlayerInput(true)
 
     -- все Року замирают
-    for _, x in ipairs(allRokus()) do pcall(function() x.Controller:StopMovement() end) end
+    for _, x in ipairs(allRokus()) do ctrlCall(x, function(c) c:StopMovement() end) end
 
     if r and valid(r) and pawn then
         local rl, me = r:K2_GetActorLocation(), pawn:K2_GetActorLocation()

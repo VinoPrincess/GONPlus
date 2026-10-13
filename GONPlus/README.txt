@@ -1,4 +1,4 @@
-GON+  v1.0  -  modes, mutators and records for GON: God of Nothing
+GON+  v1.0.1  -  modes, mutators and records for GON: God of Nothing
 ==================================================================
 
 No cheats. You only choose how you want to play.

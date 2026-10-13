@@ -2,7 +2,7 @@
 -- Все файлы gonplus\*.lua склеиваются загрузчиком (main.lua) в один кусок по порядку,
 -- поэтому local из этого файла видны в следующих. Порядок файлов важен.
 
-local VERSION = "1.0"
+local VERSION = "1.0.1"
 local AUTHOR = "VinoPrincess"
 -- лаборатория разработчика (F1): true — открывается 7 кликами по "+GON+PLUS+" в окне выбора;
 -- "always" — сразу; false — вырезана совсем
@@ -31,6 +31,29 @@ local VIS_HIDE = 1      -- Collapsed
 
 local function valid(o) return o ~= nil and o.IsValid ~= nil and o:IsValid() end
 
+-- Контроллер (мозг) персонажа — только если он настоящий: существует И управляет именно
+-- этим персонажем. Голый r.Controller у только что появившейся или пересоздаваемой Року
+-- может указывать на недостроенный/удалённый объект, и вызов на нём роняет игру мимо
+-- pcall (вылет у тестера: Pure Stealth на 4 Року, StopMovement, 13.10.2026).
+local function aiCtrl(r)
+    if not valid(r) then return nil end
+    local c = nil
+    pcall(function() c = r.Controller end)
+    if not valid(c) then return nil end
+    local mine = false
+    pcall(function()
+        local p = c.Pawn
+        mine = valid(p) and p:GetAddress() == r:GetAddress()
+    end)
+    return mine and c or nil
+end
+-- безопасные короткие вызовы
+local function ctrlCall(r, fn)
+    local c = aiCtrl(r)
+    if not c then return false end
+    return pcall(fn, c)
+end
+
 local function safe(fn, ...)
     local ok, err = pcall(fn, ...)
     if not ok then log("Error: " .. tostring(err)) end
@@ -45,7 +68,9 @@ local function num(v) if type(v) == "number" then return v end return nil end
 -- к удалённому объекту роняет игру (вылет 13.10.2026 после перезапуска уровня).
 local REF_RESETS = {}
 local function onForgetRefs(fn) REF_RESETS[#REF_RESETS + 1] = fn end
+local ROKU_SEEN = {}            -- адрес Року -> когда впервые увидели (время игры)
 local function forgetGameRefs()
+    ROKU_SEEN = {}
     for _, fn in ipairs(REF_RESETS) do pcall(fn) end
 end
 
@@ -256,6 +281,17 @@ local function gameNow()
     local pawn = getPawn()
     pcall(function() t = num(statics():GetTimeSeconds(pawn or getPC())) end)
     return t
+end
+
+-- Року, которую мы видим меньше 3 с (времени игры), не трогаем: игра ещё собирает ей мозг
+local function rokuSettled(r)
+    local addr = nil
+    pcall(function() addr = r:GetAddress() end)
+    if not addr then return false end
+    local now = gameNow() or os.clock()
+    local t = ROKU_SEEN[addr]
+    if not t then ROKU_SEEN[addr] = now return false end
+    return now - t >= 3
 end
 
 ------------------------------------------------------------------------

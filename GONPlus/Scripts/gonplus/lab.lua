@@ -184,8 +184,8 @@ local function pickDest(r)
 end
 
 local function sendTo(r, dest)
-    local ctrl = r.Controller
-    if not valid(ctrl) then return false end
+    local ctrl = aiCtrl(r)
+    if not ctrl then return false end
     local ok, res = pcall(function()
         return ctrl:MoveToLocation(dest, 80, true, true, true, false, nil, true)
     end)
@@ -193,12 +193,12 @@ local function sendTo(r, dest)
 end
 
 local function brainOff(r)
-    pcall(function() r.Controller.BrainComponent:StopLogic("GON+ lab") end)
-    pcall(function() r.Controller:StopMovement() end)
+    ctrlCall(r, function(c) c.BrainComponent:StopLogic("GON+ lab") end)
+    ctrlCall(r, function(c) c:StopMovement() end)
 end
 local function brainOn(r)
-    pcall(function() r.Controller:StopMovement() end)
-    pcall(function() r.Controller.BrainComponent:RestartLogic() end)
+    ctrlCall(r, function(c) c:StopMovement() end)
+    ctrlCall(r, function(c) c.BrainComponent:RestartLogic() end)
 end
 
 -- осмотр на месте: одна из её же анимаций "огляделась"
@@ -278,6 +278,7 @@ local function wanderTick()
         if LAB.wanderOnly and not LAB.wanderOnly[addr] then goto continue end   -- "Двойняшки": бродит только вторая
         local born = LAB.born[addr]
         if born and os.clock() - born < 3 then goto continue end   -- новенькой даём освоиться
+        if not rokuSettled(r) then goto continue end                -- и родной игры тоже
         local st = LAB.targets[addr]
         local l = r:K2_GetActorLocation()
         local pos = { X = l.X, Y = l.Y, Z = l.Z }
@@ -297,7 +298,7 @@ local function wanderTick()
                 if dd < 150 then
                     if st.investigate then
                         -- дошла до шума: осматривается, потом снова бродит
-                        pcall(function() r.Controller:StopMovement() end)
+                        ctrlCall(r, function(c) c:StopMovement() end)
                         playLookAround(r)
                         st.investigate = false
                         st.waitUntil = g + LAB.lookTime
@@ -351,7 +352,8 @@ end
 -- её собственное расследование: пишем точку шума в её Blackboard (работает с обычным мозгом)
 local function nativeInvestigate(r, loc)
     local ok = pcall(function()
-        local bb = r.Controller.Blackboard
+        local c = aiCtrl(r); if not c then return end
+        local bb = c.Blackboard
         bb:SetValueAsVector(FName("InvestigationLocation"), loc)
         bb:SetValueAsBool(FName("bShouldInvestigate"), true)
         bb:SetValueAsBool(FName("bInvestigationActive"), true)
@@ -364,7 +366,8 @@ local function nativeInvestigate(r, loc)
         local inv, act, bbloc = "?", "?", "?"
         pcall(function() inv = tostring(r.bIsInvestigating) end)
         pcall(function()
-            local bb = r.Controller.Blackboard
+            local c = aiCtrl(r); if not c then return end
+        local bb = c.Blackboard
             act = tostring(bb:GetValueAsBool(FName("bInvestigationActive")))
             local v = bb:GetValueAsVector(FName("InvestigationLocation"))
             bbloc = string.format("(%.0f, %.0f)", v.X, v.Y)
@@ -462,7 +465,8 @@ local function hearingTick()
         local addr = r:GetAddress()
         local loc, should = nil, false
         pcall(function()
-            local bb = r.Controller.Blackboard
+            local c = aiCtrl(r); if not c then return end
+        local bb = c.Blackboard
             local v = bb:GetValueAsVector(FName("InvestigationLocation"))
             if num(v.X) and math.abs(v.X) < 1e7 then loc = { X = v.X, Y = v.Y, Z = v.Z } end
             should = bb:GetValueAsBool(FName("bShouldInvestigate")) == true
@@ -601,11 +605,11 @@ local function spawnExtra()
     after(1500, function()
         if not valid(a) then log("Lab spawn: actor gone before controller check") return end
         local has = false
-        pcall(function() has = valid(a.Controller) end)
+        has = aiCtrl(a) ~= nil
         log("Lab spawn: step 3 controller from game: " .. tostring(has))
         if not has then
             pcall(function() a:SpawnDefaultController() end)
-            pcall(function() has = valid(a.Controller) end)
+            has = aiCtrl(a) ~= nil
             log("Lab spawn: step 4 SpawnDefaultController -> " .. tostring(has))
         end
     end)
@@ -616,7 +620,7 @@ local function removeExtras()
     local n = 0
     for _, a in ipairs(LAB.extras) do
         if valid(a) then
-            pcall(function() if valid(a.Controller) then a.Controller:K2_DestroyActor() end end)
+            ctrlCall(a, function(c) c:K2_DestroyActor() end)
             a:K2_DestroyActor(); n = n + 1
         end
     end
@@ -742,7 +746,7 @@ local function scanRoku()
     end
 
     local ctrl = nil
-    pcall(function() ctrl = r.Controller end)
+    ctrl = aiCtrl(r)
     w("")
     w("== CONTROLLER " .. describe(ctrl))
     if valid(ctrl) then
@@ -1271,7 +1275,7 @@ local function detectTick()
     local any = false
     for i, r in ipairs(allRokus()) do
         local bb, inBox, trace = false, false, false
-        pcall(function() bb = r.Controller.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
+        ctrlCall(r, function(c) bb = c.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
         pcall(function() inBox = r.bPlayerInVisionBox == true end)
         pcall(function() trace = r.bLineTraceHitPlayer == true end)
         local seen = bb or (inBox and trace)

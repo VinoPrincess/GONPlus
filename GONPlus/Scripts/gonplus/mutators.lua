@@ -47,7 +47,7 @@ local function rokuSees(r)
 end
 local function rokuChasing(r)
     local bb = false
-    pcall(function() bb = r.Controller.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
+    ctrlCall(r, function(c) bb = c.Blackboard:GetValueAsBool(FName("bPlayerDetected")) == true end)
     return bb or rokuSees(r)
 end
 
@@ -398,7 +398,7 @@ local function spawnFarRoku()
     after(1500, function()
         if not valid(a) then return end
         local has = false
-        pcall(function() has = valid(a.Controller) end)
+        has = aiCtrl(a) ~= nil
         if not has then pcall(function() a:SpawnDefaultController() end) end
     end)
     log(string.format("Twins: second Roku spawned at (%.0f, %.0f)", loc.X, loc.Y))
@@ -517,7 +517,7 @@ mutator {
         LAB.wanderOnly = nil
         LAB.targets = {}
         if valid(s.twin) then
-            pcall(function() if valid(s.twin.Controller) then s.twin.Controller:K2_DestroyActor() end end)
+            ctrlCall(s.twin, function(c) c:K2_DestroyActor() end)
             pcall(function() s.twin:K2_DestroyActor() end)
         end
         if s.saved then
@@ -591,7 +591,7 @@ mutator {
         if s.phase == "run" and g >= s.untilT and not anyChase then
             s.phase, s.untilT = "rest", g + rnd(12, 20)
             for _, r in ipairs(rokus) do
-                pcall(function() r.Controller:StopMovement() end)
+                ctrlCall(r, function(c) c:StopMovement() end)
                 playLookAround(r)
             end
             log("Zoomies: Roku is catching her breath")

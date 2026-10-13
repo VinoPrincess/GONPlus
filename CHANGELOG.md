@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 — 2026-10-13
+
+- **Fixed a crash in Pure Stealth with several Rokus** (reported by the first tester: 4 Rokus, a few steps after the elevator).
+  The mod now talks to a Roku's AI only when her controller really exists and controls her,
+  and leaves every newly appeared Roku alone for 3 seconds while the game finishes setting her up.
+
 ## 1.0 — 2026-10-13
 
 First public release.
