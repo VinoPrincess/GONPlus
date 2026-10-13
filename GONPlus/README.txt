@@ -8,7 +8,9 @@ mouse wheel scrolls; right click / Backspace / BACK button goes back).
 
 INSTALL
 -------
-1. Install UE4SS for the game (experimental build for UE 5.x).
+1. Install UE4SS for the game: the EXPERIMENTAL build ("experimental-latest"
+   on the UE4SS GitHub releases page), not the old stable v3.0.1 - the game runs
+   on Unreal 5.7 and the old version can crash with mods.
 2. Copy the GONPlus folder into
       ...\GON God Of Nothing\Roku3\Binaries\Win64\ue4ss\Mods\
 3. Keep the empty file enabled.txt inside GONPlus - it turns the mod on.

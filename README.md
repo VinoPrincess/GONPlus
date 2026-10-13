@@ -10,7 +10,8 @@ Every combination keeps its own best run.
 
 ## Install
 
-1. Install [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) for the game (experimental build for UE 5.x).
+1. Install [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases) for the game — **the experimental build** (`experimental-latest`, the `UE4SS_v3.x.x-...zip` file, not `zDEV`).
+   The old stable **v3.0.1 is too old** for this game (Unreal 5.7) and can crash with mods.
 2. Download `GONPlus-<version>.zip` from [Releases](../../releases) and unpack it into
    ```
    ...\GON God Of Nothing\Roku3\Binaries\Win64\ue4ss\Mods\
