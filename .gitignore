@@ -1,0 +1,7 @@
+# player data
+GONPlus/settings.txt
+GONPlus/records.txt
+# research dumps from the developer lab
+GONPlus/*scan*.txt
+# release archives
+*.zip
