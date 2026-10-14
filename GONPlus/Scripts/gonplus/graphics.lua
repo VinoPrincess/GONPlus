@@ -58,8 +58,9 @@ GFX_ROWS = {
 -- быстрые пресеты: значения строк по порядку GFX_ROWS (индекс в vals минус 1)
 local PRESETS = {
     { name = "game",     v = { 0, 0, 0, 0, 0, 0, 0, 0 } },
-    { name = "balanced", v = { 3, 0, 1, 1, 0, 2, 1, 0 } },   -- 80%, тени fast, отражения screen, TAA, лёгкие эффекты
-    { name = "max FPS",  v = { 6, 1, 2, 2, 1, 2, 1, 0 } },   -- 60%, low, тени low, без отражений и тумана, TAA
+    -- разрешение в balanced не трогаем: у игры своё (у тестера было 71%), 80% могло оказаться ВЫШЕ
+    { name = "balanced", v = { 0, 0, 1, 1, 0, 0, 1, 0 } },   -- тени fast, отражения screen, лёгкие эффекты
+    { name = "max FPS",  v = { 7, 1, 2, 2, 1, 2, 1, 0 } },   -- 50%, low, тени low, без отражений и тумана, TAA
 }
 
 local function ksl() return StaticFindObject("/Script/Engine.Default__KismetSystemLibrary") end
@@ -163,14 +164,20 @@ SCREENS.graphics = function()
     local items = {}
     local pi = presetNow()
     items[#items + 1] = { label = "Preset    [" .. (pi and PRESETS[pi].name or "custom") .. "]",
-        desc = "Game: everything as the game sets it. Balanced: lighter shadows and reflections, 80% scale. Max FPS: for weak PCs.",
+        desc = "Game: everything as the game sets it. Balanced: lighter shadows and reflections, no blur effects. Max FPS: 50% scale, low quality - for weak PCs.",
         cycle = function(dir)
             local cur = presetNow() or 1   -- "custom": вправо — balanced, влево — max FPS
             setPreset((cur - 1 + dir) % #PRESETS + 1)
         end }
     for _, r in ipairs(GFX_ROWS) do
         local v = P[r.key] or 0
-        items[#items + 1] = { label = r.label .. "    <  " .. r.vals[v + 1] .. "  >", desc = r.desc,
+        local shown = r.vals[v + 1]
+        -- "game" + что у игры сейчас стоит (разрешение рендера)
+        if v == 0 and r.key == "gfxRes" then
+            local cur = cvarGet("r.ScreenPercentage")
+            if cur and cur > 0 then shown = string.format("game: %d%%", math.floor(cur + 0.5)) end
+        end
+        items[#items + 1] = { label = r.label .. "    <  " .. shown .. "  >", desc = r.desc,
             cycle = function(dir)
                 P[r.key] = ((P[r.key] or 0) + dir) % #r.vals
                 saveSettings()
@@ -180,6 +187,13 @@ SCREENS.graphics = function()
     items[#items + 1] = { label = "FPS counter    " .. (P.gfxFpsShow and "[ON]" or "[off]"),
         desc = "Top left: average FPS and the lowest value of the last 5 seconds.",
         cycle = function() P.gfxFpsShow = not P.gfxFpsShow; saveSettings() end }
+    items[#items + 1] = { label = "Frame timing    " .. (GFX_STATUNIT and "[ON]" or "[off]"),
+        desc = "Engine numbers (stat unit): Game = CPU, GPU = video card, in milliseconds. The biggest one is what limits your FPS. Screenshot it for bug reports.",
+        cycle = function()
+            GFX_STATUNIT = not GFX_STATUNIT
+            cvarSet("stat", "unit")
+            gfxLog("stat unit " .. (GFX_STATUNIT and "on" or "off"))
+        end }
     items[#items + 1] = { label = "Reset to game", desc = "All graphics back to what the game set. For the game's own graphics menu to fully take over again, restart the game.",
         act = function() setPreset(1); windowNote("Graphics: as the game sets it") end }
     return "GRAPHICS", "Changes apply at once and are kept between runs.", items,
