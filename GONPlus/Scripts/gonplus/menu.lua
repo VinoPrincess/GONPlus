@@ -213,8 +213,10 @@ local SETTING_ROWS = {
       desc = "Speedrun panel: distance from the top of the screen." },
     { key = "ownBars",       label = "GON+ bars", bool = true,
       desc = "GON+ health and stamina bars instead of the game's own (they change color with modes)." },
-    { key = "barsCenter",    label = "Bars position", bool = true, vals = { "corner", "center" },
-      desc = "Center: wide bars at the bottom, stamina hides when full. Corner: like the game." },
+    { key = "uiStyle",       label = "Interface", choices = { { "game", "game" }, { "term", "terminal" } },
+      desc = "Game: windows like the game's pause menu. Terminal: a side panel like a computer in the complex (bars switch to match)." },
+    { key = "barsStyle",     label = "Bars", choices = { { "corner", "corner" }, { "center", "center" }, { "term", "terminal" } },
+      desc = "Corner: like the game. Center: wide bars at the bottom, stamina hides when full. Terminal: thin square bars with numbers." },
     { key = "labUnlocked",   label = "Developer lab (F1)", bool = true, only = function() return P.labUnlocked end,
       desc = "Full control over the game for testing. Runs with lab cheats don't count for records. Off hides it (7 clicks on +GON+PLUS+ bring it back)." },
 }
@@ -228,7 +230,10 @@ SCREENS.settings = function()
       if not r.only or r.only() then
         local v = P[r.key]
         local val
-        if r.vals then val = "[" .. r.vals[v and 2 or 1] .. "]"
+        if r.choices then
+            val = "<  " .. tostring(v) .. "  >"
+            for _, c in ipairs(r.choices) do if c[1] == v then val = "<  " .. c[2] .. "  >" end end
+        elseif r.vals then val = "[" .. r.vals[v and 2 or 1] .. "]"
         elseif r.bool then val = v and "[ON]" or "[off]"
         else val = "<  " .. string.format(r.fmt, v) .. "  >" end
         items[#items + 1] = { label = r.label .. "    " .. val, setting = r,
@@ -300,8 +305,14 @@ refreshUI = function()
     if UI.open then
         local title, sub, items, foot = SCREENS[UI.screen]()
         local game = UI.kind ~= "lab"
-        useView(game and "game" or "lab")
-        title = gameTitle(title)
+        useView(game and (P.uiStyle == "term" and "term" or "game") or "lab")
+        local term = UI.view.L and UI.view.L.term
+        local T = (UI.view.L and UI.view.L.theme) or {}
+        if term then
+            title = tostring(title or ""):upper():gsub("^%+%s*", ""):gsub("%s*%+$", "")
+        else
+            title = gameTitle(title)
+        end
         UI.items = items
         if UI.sel > #items then UI.sel = #items end
         if UI.sel < 1 then UI.sel = 1 end
@@ -350,8 +361,8 @@ refreshUI = function()
             if can then
                 setText(v.back.text, UI.kind == "lab" and "CLOSE" or "BACK")
                 local hot = UI.backHot == true
-                pcall(function() v.back.pill:SetBrushColor(hot and GAME.pillOn or GAME.pillOff) end)
-                setColor(v.back.text, hot and GAME.blue or GAME.idle)
+                pcall(function() v.back.pill:SetBrushColor(hot and (T.pillOn or GAME.pillOn) or (T.pillOff or GAME.pillOff)) end)
+                setColor(v.back.text, hot and (T.sel or GAME.blue) or (T.idle or GAME.idle))
             end
         end
         for i = 1, n do
@@ -364,11 +375,14 @@ refreshUI = function()
                     if it.extra then extra = it.extra end
                     local on = idx == UI.sel
                     -- выбранная кнопка: синий текст в плюсах, синеватая заливка
-                    local shown = on and ("+ " .. main .. " +") or main
+                    -- в терминале: "> ПУНКТ" белым на синей подсветке
+                    local shown
+                    if term then shown = (on and "> " or "  ") .. main
+                    else shown = on and ("+ " .. main .. " +") or main end
                     fitRowFont(r, shown, extra ~= "", UI.view.L)
                     setText(r.main, shown)
-                    setColor(r.main, on and GAME.blue or GAME.idle)
-                    pcall(function() r.pill:SetBrushColor(on and GAME.pillOn or GAME.pillOff) end)
+                    setColor(r.main, on and (T.sel or GAME.blue) or (T.idle or GAME.idle))
+                    pcall(function() r.pill:SetBrushColor(on and (T.pillOn or GAME.pillOn) or (T.pillOff or GAME.pillOff)) end)
                     setText(r.extra, extra)
                     r.extra:SetVisibility(extra ~= "" and VIS_SHOW or VIS_HIDE)
                 else
@@ -408,13 +422,23 @@ UI.close = function()
 end
 
 local function changeSetting(r, dir)
-    if r.bool then P[r.key] = not P[r.key]
+    if r.choices then
+        local n, cur = #r.choices, 1
+        for i, c in ipairs(r.choices) do if c[1] == P[r.key] then cur = i end end
+        P[r.key] = r.choices[(cur - 1 + (dir or 1)) % n + 1][1]
+        -- стиль окна тянет за собой полоски (потом их можно поменять отдельно)
+        if r.key == "uiStyle" then
+            if P.uiStyle == "term" then P.barsStyle = "term"
+            elseif P.barsStyle == "term" then P.barsStyle = "center" end
+        end
+    elseif r.bool then P[r.key] = not P[r.key]
     else
         local v = P[r.key] + dir * r.step
         P[r.key] = math.max(r.min, math.min(r.max, v))
     end
     saveSettings()
-    if r.key == "barsCenter" and layoutBars then layoutBars() end
+    P.barsCenter = P.barsStyle == "center"
+    if (r.key == "barsStyle" or r.key == "uiStyle") and layoutBars then layoutBars() end
     if r.key == "labUnlocked" then VERBOSE = P.labUnlocked == true end
     -- размер и место панели применяем сразу
     if UI.hudSlot then pcall(function() UI.hudSlot:SetPosition({ X = -P.hudX, Y = P.hudY }) end) end

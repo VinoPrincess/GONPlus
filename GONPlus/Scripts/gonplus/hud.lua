@@ -294,10 +294,18 @@ local function updateBars(dt)
     local b = UI.bars; if not b then return end
     local pawn = getPawn()
     local show = P.ownBars and pawn ~= nil and R.phase ~= "none" and R.base ~= "nightmare"
+    local term = show and P.barsStyle == "term"
     for _, k in ipairs({ "hp", "st" }) do
         for _, part in ipairs({ "frame", "trail", "fill" }) do
             local w = b[k][part]
             if valid(w) then w:SetVisibility(show and VIS_SHOW or VIS_HIDE) end
+        end
+        for _, part in ipairs({ "name", "num" }) do
+            local w = b[k][part]
+            if valid(w) and b[k][part .. "On"] ~= term then
+                b[k][part .. "On"] = term
+                w:SetVisibility(term and VIS_SHOW or VIS_HIDE)
+            end
         end
     end
     if not show then if valid(b.label) then b.label:SetVisibility(VIS_HIDE) end return end
@@ -314,6 +322,7 @@ local function updateBars(dt)
         local la = (lv >= 0.6) and (0.65 + 0.35 * math.abs(math.sin(t * 4))) or 1
         pcall(function() b.hp.fill:SetBrushColor({ R = 1.0, G = 0.35, B = 0.65, A = la }) end)
         setText(b.label, string.format("+ IN LOVE  %d%% +", lovePercent()))
+        if term then setText(b.hp.num, string.format("%d%%", lovePercent())); setText(b.hp.name, "<3") end
         setColor(b.label, { R = 1.0, G = 0.45, B = 0.7, A = 1 })
         b.label:SetVisibility(VIS_SHOW)
         goto bars_stamina
@@ -329,6 +338,7 @@ local function updateBars(dt)
         b.trailV, b.trailHold = hp, 0
     end
     b.lastHp = hp
+    if term then setText(b.hp.num, string.format("%d%%", math.floor(hp * 100 + 0.5))); setText(b.hp.name, "HP") end
     pcall(function() b.hp.fillSlot:SetSize({ X = math.max(0.01, iw * hp), Y = ih }) end)
     pcall(function() b.hp.trailSlot:SetSize({ X = math.max(0.01, iw * b.trailV), Y = ih }) end)
     local bleeding = ACTIVE.sutegoma
@@ -350,11 +360,12 @@ local function updateBars(dt)
     pcall(function() rec = pawn.Recovering == true end)
     local st = (meter and total and total > 0) and math.max(0, math.min(1, meter / total)) or 1
     pcall(function() b.st.fillSlot:SetSize({ X = math.max(0.01, siw * st), Y = sih }) end)
+    if term then setText(b.st.num, rec and "--" or string.format("%d%%", math.floor(st * 100 + 0.5))) end
     local sa = rec and (0.35 + 0.25 * math.abs(math.sin(t * 5))) or 1
     pcall(function() b.st.fill:SetBrushColor({ R = GAME.stBlue.R, G = GAME.stBlue.G, B = GAME.stBlue.B, A = sa }) end)
     -- по центру: полная выносливость через 1.5 с прячется, при беге появляется
     local op = 1
-    if P.barsCenter then
+    if P.barsStyle == "center" then
         if st >= 0.999 and not rec then
             b.stFullSince = b.stFullSince or t
             op = math.max(0, 1 - (t - b.stFullSince - 1.5) / 0.5)

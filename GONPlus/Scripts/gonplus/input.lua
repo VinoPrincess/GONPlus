@@ -29,7 +29,7 @@ onKey(Key.RETURN, function()
     local it = UI.items[UI.sel]
     if not it then return end
     if it.setting then
-        if it.setting.bool then changeSetting(it.setting, 1) end
+        if it.setting.bool or it.setting.choices then changeSetting(it.setting, 1) end
     elseif it.cycle and not it.act then
         it.cycle(1)
     elseif it.act then
@@ -110,7 +110,9 @@ end
 local function tagAtMouse()
     local x, y, L = mouseInMenu()
     if not x or UI.kind == "lab" then return false end
-    return y >= L.tagY - 4 and y <= L.tagY + 26 and math.abs(x - L.w / 2) <= 160
+    if y < L.tagY - 4 or y > L.tagY + 26 then return false end
+    if L.left then return x >= L.rowX - 10 and x <= L.rowX + 320 end   -- терминал: надпись слева
+    return math.abs(x - L.w / 2) <= 160
 end
 
 -- бегунок под мышь: y — середина бегунка

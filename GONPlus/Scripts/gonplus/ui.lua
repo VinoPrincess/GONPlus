@@ -160,14 +160,47 @@ local LABMENU = {
     rowFont = "main", rowSize = 15, extraSize = 12, plusSize = 30,
     descSize = 14, descH = 60, footSize = 13,
 }
+-- «Терминал» (Interface: terminal): панель во всю высоту слева, моноширинный шрифт игры,
+-- квадратные углы, синяя линия; выбранный пункт — "> ПУНКТ" на синей подсветке
+local TERMMENU = {
+    w = 620, h = 1000, ax = 0, ay = 0.5, alx = 0, aly = 0.5, px = 0, py = 0,
+    rows = 10, rowX = 34, rowW = 540, rowY = 182, rowH = 50, rowStep = 56,
+    tag = "GON+ // TERMINAL", tagY = 34, titleY = 62, titleH = 56, titleSize = 34, subY = 120, subSize = 16,
+    rowFont = "main", rowSize = 22, extraSize = 13, plusSize = 0,
+    descSize = 16, descH = 120, footSize = 13,
+    left = true, term = true, radius = 0, pillRadius = 3,
+}
 local GAME_ROWS = MENU.rows
+
+-- цвета окна: по умолчанию как меню паузы игры, у терминала свои
+local THEME_GAME = {
+    frame = GAME.frame, outline = GAME.outline, outlineW = 1.5,
+    pillOff = GAME.pillOff, pillOn = GAME.pillOn, pillLine = GAME.outline, pillLineW = 2,
+    idle = GAME.idle, sel = GAME.blue, tag = GAME.faint, title = GAME.white, sub = GAME.soft,
+    desc = GAME.soft, foot = GAME.faint, more = GAME.blue, thumb = GAME.blue,
+}
+local TERM_BLUE = { R = 0.0, G = 0.5, B = 1.0, A = 1 }
+local THEME_TERM = {
+    frame = { R = 0.01, G = 0.015, B = 0.03, A = 0.93 }, outline = { R = 0.0, G = 0.5, B = 1.0, A = 0.85 }, outlineW = 1.5,
+    pillOff = { R = 0, G = 0, B = 0, A = 0 }, pillOn = { R = 0.0, G = 0.45, B = 1.0, A = 0.22 },
+    pillLine = { R = 0, G = 0, B = 0, A = 0 }, pillLineW = 0,
+    idle = { R = 1, G = 1, B = 1, A = 0.6 }, sel = GAME.white, tag = TERM_BLUE, title = GAME.white,
+    sub = { R = 1, G = 1, B = 1, A = 0.5 }, desc = { R = 1, G = 1, B = 1, A = 0.72 },
+    foot = { R = 1, G = 1, B = 1, A = 0.4 }, more = TERM_BLUE, thumb = TERM_BLUE,
+}
+MENU.theme, LABMENU.theme, TERMMENU.theme = THEME_GAME, THEME_GAME, THEME_TERM
 
 local function buildGameMenu(tree, canvas, L)
     L = L or MENU
+    local T = L.theme or THEME_GAME
     local v = { rows = {}, game = true, L = L }
+    local big = L ~= LABMENU      -- окно выбора (у лаборатории всё компактнее)
+    -- выравнивание текста: по центру (стиль игры) или влево (терминал)
+    local function align(t) if L.left then pcall(function() t:SetJustification(0) end) else center(t) end end
+    local HALIGN = L.left and 1 or 2
     -- рамка окна: тёмная полупрозрачная, тонкая светлая обводка, большие скругления
     local frame = construct("/Script/UMG.Border", tree)
-    roundBrush(frame, GAME.frame, GAME.outline, 1.5, L == MENU and 36 or 24)
+    roundBrush(frame, T.frame, T.outline, T.outlineW, L.radius or (L == MENU and 36 or 24))
     pcall(function() frame:SetPadding({ Left = 0, Top = 0, Right = 0, Bottom = 0 }) end)
     local slot = canvas:AddChildToCanvas(frame)
     pcall(function() slot:SetAutoSize(false) end)
@@ -194,20 +227,24 @@ local function buildGameMenu(tree, canvas, L)
         t:SetText(FText(""))
         setColor(t, color)
         setFont(t, font, size)
-        center(t)
+        align(t)
+        -- влево: отступ как у списка
+        if L.left and not x then x, w = L.rowX, L.w - L.rowX * 2 end
         place(t, x or 0, y, w or L.w, h)
         return t
     end
 
     -- подпись мода в духе "+GOD+OF+NOTHING+" под логотипом
-    v.tag = text("main", 14, GAME.faint, L.tagY, 24)
-    pcall(function() local f = v.tag.Font; f.LetterSpacing = 450; v.tag:SetFont(f) end)
+    v.tag = text("main", 14, T.tag, L.tagY, 24)
+    pcall(function() local f = v.tag.Font; f.LetterSpacing = L.term and 250 or 450; v.tag:SetFont(f) end)
     setText(v.tag, L.tag)
-    v.title = text("main", L.titleSize, GAME.white, L.titleY, L.titleH)
-    v.sub = text("main", L.subSize, GAME.soft, L.subY, 30)
+    v.title = text("main", L.titleSize, T.title, L.titleY, L.titleH)
+    v.sub = text("main", L.subSize, T.sub, L.subY, 30)
     -- "+" в углу окна, как у меню паузы
-    local plus = text("button", L.plusSize, GAME.white, 6, L.plusSize + 20, L.w - L.plusSize - 40, L.plusSize + 20)
-    setText(plus, "+")
+    if (L.plusSize or 0) > 0 then
+        local plus = text("button", L.plusSize, GAME.white, 6, L.plusSize + 20, L.w - L.plusSize - 40, L.plusSize + 20)
+        setText(plus, "+")
+    end
 
     -- Список — в настоящем ScrollBox движка: колёсико мыши он крутит сам (у колёсика нет
     -- кода клавиши, поймать его из Lua нельзя). Все кнопки существуют сразу, лишние скрыты.
@@ -230,19 +267,21 @@ local function buildGameMenu(tree, canvas, L)
     for i = 1, MAXROWS do
         local pill = construct("/Script/UMG.Border", tree)
         -- радиус = половина высоты: полностью круглые края, как кнопки игры
-        roundBrush(pill, GAME.pillOff, GAME.outline, 2, L.rowH / 2)
-        pcall(function() pill:SetPadding({ Left = 24, Top = 1, Right = 24, Bottom = 1 }) end)
-        pcall(function() pill:SetHorizontalAlignment(2); pill:SetVerticalAlignment(2) end)
+        roundBrush(pill, T.pillOff, T.pillLine, T.pillLineW, L.pillRadius or (L.rowH / 2))
+        pcall(function() pill:SetPadding({ Left = L.left and 14 or 24, Top = 1, Right = 24, Bottom = 1 }) end)
+        pcall(function() pill:SetHorizontalAlignment(HALIGN); pill:SetVerticalAlignment(2) end)
         local inner = construct("/Script/UMG.VerticalBox", tree)
         pill:SetContent(inner)
         local main = construct("/Script/UMG.TextBlock", tree)
-        setFont(main, L.rowFont, L.rowSize); center(main); setColor(main, GAME.idle)
+        setFont(main, L.rowFont, L.rowSize); align(main); setColor(main, T.idle)
         local ms = inner:AddChildToVerticalBox(main)
-        pcall(function() ms:SetHorizontalAlignment(2) end)
+        pcall(function() ms:SetHorizontalAlignment(HALIGN) end)
         local extra = construct("/Script/UMG.TextBlock", tree)
-        setFont(extra, "main", L.extraSize); center(extra); setColor(extra, GAME.soft)
+        setFont(extra, "main", L.extraSize); align(extra); setColor(extra, T.sub)
         local es = inner:AddChildToVerticalBox(extra)
-        pcall(function() es:SetHorizontalAlignment(2) end)
+        pcall(function() es:SetHorizontalAlignment(HALIGN) end)
+        -- в терминале подпись под пунктом с отступом под "> "
+        if L.left then pcall(function() es:SetPadding({ Left = 28, Top = 0, Right = 0, Bottom = 0 }) end) end
         local sz = construct("/Script/UMG.SizeBox", tree)
         pcall(function() sz:SetHeightOverride(L.rowH) end)
         sz:SetContent(pill)
@@ -254,42 +293,43 @@ local function buildGameMenu(tree, canvas, L)
 
     -- "ещё выше / ещё ниже": видно, что список длиннее; наведение листает, клик — страницу
     local listEnd = L.rowY + L.rows * L.rowStep - (L.rowStep - L.rowH)
-    v.moreUp = text("main", 14, GAME.blue, L.rowY - 22, 20, L.rowX, L.rowW)
-    v.moreDown = text("main", 14, GAME.blue, listEnd + 2, 20, L.rowX, L.rowW)
+    v.moreUp = text("main", 14, T.more, L.rowY - 22, 20, L.rowX, L.rowW)
+    v.moreDown = text("main", 14, T.more, listEnd + 2, 20, L.rowX, L.rowW)
     v.moreUpY, v.moreDownY = L.rowY - 22, listEnd + 2
     v.moreUp:SetVisibility(VIS_HIDE); v.moreDown:SetVisibility(VIS_HIDE)
 
     -- полоса прокрутки справа от списка: дорожка + бегунок (клик по дорожке — туда, можно тянуть)
-    local sb = { x = L.rowX + L.rowW + (L == MENU and 18 or 10), y = L.rowY, w = L == MENU and 10 or 8,
+    local sb = { x = L.rowX + L.rowW + (big and 18 or 10), y = L.rowY, w = big and 10 or 8,
                  h = listEnd - L.rowY }
+    local sbR = L.term and 1 or sb.w / 2
     sb.track = construct("/Script/UMG.Border", tree)
-    roundBrush(sb.track, { R = 0, G = 0, B = 0, A = 0.35 }, GAME.outline, 1, sb.w / 2)
+    roundBrush(sb.track, { R = 0, G = 0, B = 0, A = 0.35 }, L.term and T.outline or GAME.outline, 1, sbR)
     place(sb.track, sb.x, sb.y, sb.w, sb.h)
     sb.thumb = construct("/Script/UMG.Border", tree)
-    roundBrush(sb.thumb, GAME.blue, { R = 0, G = 0, B = 0, A = 0 }, 0, sb.w / 2)
+    roundBrush(sb.thumb, T.thumb, { R = 0, G = 0, B = 0, A = 0 }, 0, sbR)
     sb.thumbSlot = place(sb.thumb, sb.x, sb.y, sb.w, 40)
     sb.track:SetVisibility(VIS_HIDE); sb.thumb:SetVisibility(VIS_HIDE)
     v.sb = sb
 
     -- кнопка "назад" в левом нижнем углу (у главного экрана её нет)
-    local bk = { x = 36, w = L == MENU and 170 or 130, h = L == MENU and 44 or 36 }
+    local bk = { x = L.term and L.rowX or 36, w = big and 170 or 130, h = big and 44 or 36 }
     bk.y = L.h - bk.h - 22
     bk.pill = construct("/Script/UMG.Border", tree)
-    roundBrush(bk.pill, GAME.pillOff, GAME.outline, 2, bk.h / 2)
+    roundBrush(bk.pill, T.pillOff, L.term and T.outline or GAME.outline, L.term and 1 or 2, L.term and 3 or bk.h / 2)
     pcall(function() bk.pill:SetHorizontalAlignment(2); bk.pill:SetVerticalAlignment(2) end)
     bk.text = construct("/Script/UMG.TextBlock", tree)
-    setFont(bk.text, L.rowFont, L == MENU and 20 or 15); center(bk.text); setColor(bk.text, GAME.idle)
+    setFont(bk.text, L.rowFont, big and 20 or 15); center(bk.text); setColor(bk.text, T.idle)
     bk.text:SetText(FText("BACK"))
     bk.pill:SetContent(bk.text)
     place(bk.pill, bk.x, bk.y, bk.w, bk.h)
     bk.pill:SetVisibility(VIS_HIDE)
     v.back = bk
     local descY = listEnd + 26
-    v.desc = text("main", L.descSize, GAME.soft, descY, L.descH, 40, L.w - 80)
+    v.desc = text("main", L.descSize, T.desc, descY, L.descH, L.left and L.rowX or 40, L.left and L.rowW or (L.w - 80))
     pcall(function() v.desc:SetAutoWrapText(true) end)
     -- подсказка внизу — правее кнопки "назад"
-    local footX = L == MENU and 230 or 180
-    v.foot = text("main", L.footSize, GAME.faint, L.h - L.footSize - 30, L.footSize + 12, footX, L.w - footX - 30)
+    local footX = bk.x + bk.w + 24
+    v.foot = text("main", L.footSize, T.foot, L.h - L.footSize - 30, L.footSize + 12, footX, L.w - footX - 30)
     pcall(function() v.foot:SetAutoWrapText(true) end)
     frame:SetVisibility(VIS_HIDE)
     return v
@@ -307,16 +347,17 @@ HUD_STYLE = {
 }
 
 -- Полоски: как у игры — выносливость синяя, здоровье зелёное.
--- Два вида (настройка barsCenter):
+-- Три вида (настройка barsStyle; ещё terminal — см. BARS_LAYOUT.term):
 --   по центру внизу — широкое тонкое здоровье и под ним узкая выносливость (прячется, когда полная)
 --   в углу слева — как у игры: выносливость сверху, здоровье снизу
 local BARS_LAYOUT = {
     center = { ax = 0.5, hp = { w = 440, h = 14, y = -78, inset = 3 }, st = { w = 300, h = 8, y = -56, inset = 2 } },
     corner = { ax = 0,   x = 48, st = { w = 300, h = 20, y = -98, inset = 4 }, hp = { w = 300, h = 20, y = -64, inset = 4 } },
+    -- терминал: слева внизу тонкие квадратные полоски, слева "HP"/"ST", справа проценты
+    term   = { ax = 0,   x = 92, term = true, hp = { w = 260, h = 12, y = -78, inset = 2 }, st = { w = 260, h = 12, y = -54, inset = 2 } },
 }
 function barsGeom()
-    local L = P.barsCenter and BARS_LAYOUT.center or BARS_LAYOUT.corner
-    return L
+    return BARS_LAYOUT[P.barsStyle] or BARS_LAYOUT.corner
 end
 
 function buildBars(tree, canvas)
@@ -336,6 +377,17 @@ function buildBars(tree, canvas)
         e.frame, e.frameSlot = piece({ R = 0, G = 0, B = 0, A = 0.35 }, GAME.outline, 2, h)
         if k == "hp" then e.trail, e.trailSlot = piece({ R = 1, G = 1, B = 1, A = 0.55 }, clear, 0, h) end
         e.fill, e.fillSlot = piece(k == "hp" and GAME.hpGreen or GAME.stBlue, clear, 0, h)
+        -- подписи терминала: "HP" слева от полоски, "72%" справа
+        for _, part in ipairs({ "name", "num" }) do
+            local t = construct("/Script/UMG.TextBlock", tree)
+            t:SetText(FText(part == "name" and (k == "hp" and "HP" or "ST") or ""))
+            setColor(t, { R = 1, G = 1, B = 1, A = 0.75 })
+            setFont(t, "main", 14)
+            local s2 = canvas:AddChildToCanvas(t)
+            pcall(function() s2:SetAutoSize(true) end)
+            t:SetVisibility(VIS_HIDE)
+            e[part], e[part .. "Slot"] = t, s2
+        end
         b[k] = e
     end
     -- подпись над здоровьем (кровотечение, влюблённость)
@@ -374,13 +426,25 @@ function layoutBars()
         put(e.frameSlot, x, g.y, g.w, g.h)
         put(e.trailSlot, x + g.inset, g.y + g.inset, g.w - g.inset * 2, g.h - g.inset * 2)
         put(e.fillSlot, x + g.inset, g.y + g.inset, g.w - g.inset * 2, g.h - g.inset * 2)
-        -- скругление под новую высоту
+        -- подписи терминала (у других видов спрятаны в updateBars)
+        for _, part in ipairs({ "name", "num" }) do
+            local s2 = e[part .. "Slot"]
+            if s2 then pcall(function()
+                s2:SetAnchors({ Minimum = { X = L.ax, Y = 1 }, Maximum = { X = L.ax, Y = 1 } })
+                s2:SetAlignment({ X = 0, Y = 0.5 })
+                s2:SetPosition({ X = part == "name" and (x - 40) or (x + g.w + 12), Y = g.y + g.h / 2 })
+            end) end
+        end
+        -- скругление под новую высоту (терминал — квадратные углы, синяя обводка)
+        local term = L.term
         for _, part in ipairs({ "frame", "trail", "fill" }) do
             local w = e[part]
             if valid(w) then
                 local fill = nil
-                if part == "frame" then roundBrush(w, { R = 0, G = 0, B = 0, A = 0.35 }, GAME.outline, P.barsCenter and 1.5 or 2, g.h / 2)
-                else roundBrush(w, part == "trail" and { R = 1, G = 1, B = 1, A = 0.55 } or (k == "hp" and GAME.hpGreen or GAME.stBlue), { R = 0, G = 0, B = 0, A = 0 }, 0, (g.h - g.inset * 2) / 2) end
+                if part == "frame" then
+                    roundBrush(w, { R = 0, G = 0, B = 0, A = term and 0.5 or 0.35 }, term and { R = 0, G = 0.5, B = 1, A = 0.8 } or GAME.outline,
+                        term and 1 or (P.barsStyle == "center" and 1.5 or 2), term and 0 or g.h / 2)
+                else roundBrush(w, part == "trail" and { R = 1, G = 1, B = 1, A = 0.55 } or (k == "hp" and GAME.hpGreen or GAME.stBlue), { R = 0, G = 0, B = 0, A = 0 }, 0, term and 0 or (g.h - g.inset * 2) / 2) end
             end
         end
     end
@@ -438,6 +502,8 @@ local function buildUI()
 
     -- окно выбора в стиле меню паузы игры
     UI.views.game = buildGameMenu(tree, canvas)
+    -- то же окно в стиле «терминал» (Settings -> Interface)
+    UI.views.term = buildGameMenu(tree, canvas, TERMMENU)
 
     -- окно данных лаборатории (слева сверху)
     local lab, lvb = box(tree, canvas, 0, 0, 0, 0, 30, 30, COL.gold, COL.hudBg)

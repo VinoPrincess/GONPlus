@@ -229,7 +229,9 @@ local DEFAULTS = {
     hudX          = 40,     -- отступ от правого края
     hudY          = 30,     -- отступ сверху
     ownBars       = true,   -- свои полоски здоровья/выносливости вместо родных
-    barsCenter    = true,   -- полоски по центру внизу (иначе в углу, как у игры)
+    barsCenter    = true,   -- (старое) полоски по центру; теперь barsStyle
+    barsStyle     = "",     -- полоски: corner (как у игры) / center / term; "" = взять из barsCenter
+    uiStyle       = "game", -- окно выбора: game (как меню паузы) / term (терминал слева)
     lastMode      = "",     -- (старое, не используется)
     lastMut       = "",
     selBase       = "normal", -- выбранный режим: normal / stealth / nightmare
@@ -280,6 +282,10 @@ local function loadSettings()
     f:close()
 end
 loadSettings()
+if P.barsStyle ~= "corner" and P.barsStyle ~= "center" and P.barsStyle ~= "term" then
+    P.barsStyle = P.barsCenter and "center" or "corner"
+end
+if P.uiStyle ~= "term" then P.uiStyle = "game" end
 VERBOSE = VERBOSE or P.labUnlocked == true
 
 ------------------------------------------------------------------------

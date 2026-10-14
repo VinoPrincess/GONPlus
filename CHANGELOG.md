@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **New interface style: Terminal** (Settings → Interface). The choice window becomes a full-height side panel
+  like a computer in the complex: the game's monospace font, square corners, a blue line, `> ROW` selection.
+  The game-style window stays the default.
+- **Bars: a third look, Terminal** (Settings → Bars: corner / center / terminal) — thin square bars at the bottom left
+  with HP / ST labels and percentages. Switching the interface to Terminal switches the bars too.
 - **Settings → Graphics / FPS** — for PCs where the game drops frames (reported on AMD cards):
   render scale, overall quality, faster shadows (no Unreal 5 virtual shadows), cheaper reflections,
   volumetric fog, anti-aliasing, light effects, FPS limit, quick presets (game / balanced / max FPS)
