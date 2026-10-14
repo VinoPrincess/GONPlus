@@ -261,15 +261,18 @@ local function rokuTick(r, g, final)
         return
     end
 
-    -- увидела — гонится
-    if sees and not hiding and st.mode ~= "chase" then
-        setMode(st, "chase", g); st.lastSeen = g
-        log("Lovesick: she sees you")
+    -- увидела — гонится. В конце ("SHE ALWAYS KNOWS") — гонится всегда, видит или нет:
+    -- раньше она шла на точку из "силы любви", доходила, оглядывалась и убегала бродить,
+    -- а через 4 с новая точка — бегала туда-сюда и не обнимала (обнять можно только в погоне)
+    local knows = final and not hiding
+    if (sees or knows) and not hiding and st.mode ~= "chase" then
+        setMode(st, "chase", g); st.lastSeen = g; st.lastLoc = me
+        log(sees and "Lovesick: she sees you" or "Lovesick: she always knows - chasing")
     end
 
     if st.mode == "chase" then
         speed(r, final and o.chase or o.chase * 0.85, true)
-        if sees and not hiding then st.lastSeen = g; st.lastLoc = me end
+        if (sees or knows) and not hiding then st.lastSeen = g; st.lastLoc = me end
         if g >= st.nextOrder then goTo(st, st.lastLoc or me, g) end
         if dist < HUG_DIST and g >= st.hugReady and not hiding then hug(st, g) return end
         if g - (st.lastSeen or g) > (final and 30 or 5) then
@@ -279,6 +282,12 @@ local function rokuTick(r, g, final)
         end
     elseif st.mode == "seek" then
         speed(r, o.chase, true)
+        -- нашла: игрок рядом — погоня (и объятие), а не осмотр пустой точки
+        if dist < 600 and not hiding then
+            setMode(st, "chase", g); st.lastSeen, st.lastLoc = g, me
+            goTo(st, me, g)
+            return
+        end
         if not st.dest or g >= st.nextOrder + 2 then goTo(st, st.seekLoc or me, g) end
         if vlen(pos.X - st.dest.X, pos.Y - st.dest.Y, 0) < 200 or st.still > 3 then
             playLookAround(r); setMode(st, "look", g)
