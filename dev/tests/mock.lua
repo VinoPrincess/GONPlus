@@ -56,6 +56,10 @@ mt.__index = function(t, k)
     if k == "K2_GetActorLocation" then return function() return { X = 1000 + math.random(0, 5), Y = 0, Z = 0 } end end
     if k == "GetActorForwardVector" then return function() return { X = -1, Y = 0, Z = 0 } end end
     if k == "GetCameraLocation" then return function() return { X = 0, Y = 0, Z = 60 } end end
+    if k == "GetCameraRotation" then return function() return { Pitch = 0, Yaw = CAM_YAW or 0, Roll = 0 } end end
+    if k == "K2_GetRandomReachablePointInRadius" then return function(_, _, o, res, r)
+        local a = math.random() * math.pi * 2; local d = (r or 1000) * (0.5 + math.random() * 0.5)
+        res.X, res.Y, res.Z = o.X + math.cos(a) * d, o.Y + math.sin(a) * d, o.Z; return true end end
     if k == "MoveToLocation" then return function() MOVES = (MOVES or 0) + 1; return 1 end end
     if k == "LineTraceSingle" then return function() return false end end
     if k == "DoesSocketExist" then return function() return true end end

@@ -2,6 +2,13 @@
 
 ## Unreleased (1.1)
 
+- **New mode: Bashful.** Idea by VinoPrincess, in the spirit of SCP-096: Roku can't see you, but she feels your gaze.
+  She doesn't walk — she flickers out and appears again near you: ahead, behind, around the corner.
+  Two ways to lose: look at her too long (she's on screen and nothing hides her), or come too close
+  (near you *and* in plain sight — a wall between you doesn't count). A pink meter at the top shows how
+  embarrassed she is; it fills while you stare or stand close and slowly fades. She never attacks.
+  Not with Twins, Zoomies or Razor Claws.
+- Zero Hour: its own victory screen ("JUST IN TIME") instead of the reactor's.
 - **New mutator: Zero Hour.** One minute on the clock; every apple adds 20 seconds, but you can bank 2:30 at most —
   the clock is always nearly empty. Run, plan your vents, don't miss apples. Time out = defeat.
   The timer turns blue / pink / red at 40 / 20 / 10 seconds and shakes only in the last 10.

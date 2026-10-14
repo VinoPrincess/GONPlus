@@ -38,6 +38,7 @@ Updating: replace the `Scripts` folder, keep `settings.txt` and `records.txt` (y
 |---|---|
 | **Normal** | The game as it is: collect the apples and get out. |
 | **Pure Stealth** | Roku doesn't hunt you — but if she *sees* you, it's over. No hiding. Running and thrown items make noise. 1–4 Rokus. |
+| **Bashful** | She can't see you, but she feels your gaze. She flickers in and out near you — ahead, behind, around the corner. Don't stare at her, don't come close. She never attacks. |
 | **Nightmare** | Almost impossible. No HUD, real darkness, one hit kills, no hiding spots, only a little trash and skulls to throw. She hears you run. |
 | **Lovesick** | Roku is drunk and very affectionate. Survive the timer (4–12 min). Every hug makes you fall for her — a full heart and you lose. Throw gifts at her to cool her down. |
 

@@ -105,6 +105,8 @@ WIN = {
     normal    = { title = "+ ALL CLEAR +", sub = "Every sample collected. You walk out." },
     stealth   = { title = "+ GHOST +", sub = "She never saw you. Not once." },
     nightmare = { title = "+ DAWN +", sub = "You woke up from the nightmare." },
+    shy       = { title = "+ RESPECTFUL +", sub = "You never made her uncomfortable. She'll remember that." },
+    zerohour  = { title = "+ JUST IN TIME +", sub = "The clock never got its zero." },
     chaos     = { title = "+ CHAOS TAMED +", sub = "Whatever it threw at you, you handled it." },
     slippery  = { title = "+ STEADY HANDS +", sub = "Nothing slipped when it mattered." },
     sutegoma  = { title = "+ STILL BREATHING +", sub = "SUTEGOMA. You kept the bleeding in check." },
@@ -117,6 +119,7 @@ function winScreen()
     if R.base and R.base ~= "normal" and WIN[R.base] then return WIN[R.base] end
     if R.mode == "chaos" then return WIN.chaos end
     local m = R.mutId and MUTS[R.mutId]
+    if m and m.shortClock then return WIN.zerohour end
     if m and m.countdown then
         local left = R.lastCountdown or 0
         return { title = "+ OUT BEFORE THE BLAST +", sub = "The reactor still had " .. fmtTime(math.max(0, left)) .. " left." }

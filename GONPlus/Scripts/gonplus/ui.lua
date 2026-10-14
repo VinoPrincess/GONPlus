@@ -636,6 +636,41 @@ local function buildUI()
         UI.nightTag, UI.nightSlot = t, ns
     end
 
+    -- шкала режима (Bashful: "смущение"): сверху по центру — подпись и полоска
+    do
+        local m = {}
+        local function piece(fill, x, y, w, h)
+            local b = construct("/Script/UMG.Border", tree)
+            roundBrush(b, fill, { R = 0, G = 0, B = 0, A = 0 }, 0, 2)
+            local s = canvas:AddChildToCanvas(b)
+            pcall(function()
+                s:SetAutoSize(false)
+                s:SetAnchors({ Minimum = { X = 0.5, Y = 0 }, Maximum = { X = 0.5, Y = 0 } })
+                s:SetAlignment({ X = 0, Y = 0 })
+                s:SetPosition({ X = x, Y = y }); s:SetSize({ X = w, Y = h })
+            end)
+            b:SetVisibility(VIS_HIDE)
+            return b, s
+        end
+        m.w, m.h, m.y = 360, 6, 96
+        m.track = piece({ R = 1, G = 1, B = 1, A = 0.18 }, -m.w / 2, m.y, m.w, m.h)
+        m.fill, m.fillSlot = piece({ R = 1, G = 0.45, B = 0.7, A = 1 }, -m.w / 2, m.y, 1, m.h)
+        local t = construct("/Script/UMG.TextBlock", tree)
+        t:SetText(FText(""))
+        setColor(t, { R = 1, G = 0.6, B = 0.8, A = 1 })
+        setFont(t, "main", 16)
+        center(t)
+        local ts = canvas:AddChildToCanvas(t)
+        pcall(function()
+            ts:SetAutoSize(true)
+            ts:SetAnchors({ Minimum = { X = 0.5, Y = 0 }, Maximum = { X = 0.5, Y = 0 } })
+            ts:SetAlignment({ X = 0.5, Y = 1 }); ts:SetPosition({ X = 0, Y = m.y - 6 })
+        end)
+        t:SetVisibility(VIS_HIDE)
+        m.text = t
+        UI.meter = m
+    end
+
     -- счётчик FPS (Settings -> Graphics), слева сверху
     do
         local t = construct("/Script/UMG.TextBlock", tree)

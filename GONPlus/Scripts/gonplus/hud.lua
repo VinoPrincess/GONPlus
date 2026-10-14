@@ -233,6 +233,7 @@ MODE_COLOR = {
     stealth   = { R = 0.25, G = 0.55, B = 1.0 },
     nightmare = { R = 1.0, G = 0.15, B = 0.3 },
     lovesick  = { R = 1.0, G = 0.4, B = 0.7 },
+    shy       = { R = 1.0, G = 0.6, B = 0.8 },
     chaos     = { R = 0.7, G = 0.45, B = 1.0 },
 }
 MUT_COLOR = {

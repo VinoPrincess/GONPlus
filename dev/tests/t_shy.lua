@@ -1,0 +1,20 @@
+-- Bashful (Скромница): режим выбирается, Twins с ним нельзя, Року переходит под режим без ошибок
+TESTS = arg[0]:match("^(.*)[/\\]") or "."
+dofile(TESTS .. "/mock.lua")
+LOAD(arg[1])
+run(600)
+setMode("BASHFUL")
+check(hasText("MODE: BASHFUL"), "Bashful in the mode list")
+goto_("MUTATOR: NONE"); key("RETURN")
+check(hasText("not with Bashful"), "some mutators are blocked with Bashful")
+key("BACKSPACE")
+startRun()
+check(logHas("Bashful: started"), "mode starts")
+ROKU_PRESENT = true; run(6000)
+check(logHas("Bashful: took over Roku"), "the game's Roku is taken over")
+check(logHas("key shy"), "own record key")
+-- она появляется рядом; если стоит перед камерой и видна — шкала растёт и наступает проигрыш
+run(15000)
+check(logHas("Bashful: appeared"), "she appears near the player")
+check(logHas("Bashful: lost %- stare") or logHas("Bashful: lost %- near"), "staring / closeness ends the run")
+DONE("shy")

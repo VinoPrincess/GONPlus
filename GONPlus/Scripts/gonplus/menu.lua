@@ -10,9 +10,13 @@ BASES = {
       desc = "Roku doesn't hunt you. If she SEES you - it's over. No hiding. Running and thrown items make noise." },
     { id = "lovesick", name = "Lovesick",
       desc = "Roku is drunk and very affectionate. Survive until she sobers up. Every hug makes you fall for her; full heart = you lose. No trash, no booze - only gifts to throw at her. Gifts and spanks cool her down." },
+    { id = "shy", name = "Bashful",
+      desc = "She can't see you, but she feels your gaze. She flickers in and out near you - ahead, behind, around the corner. Don't stare at her, don't come close. She never attacks." },
     { id = "nightmare", name = "Nightmare",
       desc = "Almost impossible. No HUD, lights out, one hit kills, no hiding spots, only a little trash and skulls to throw. She hears you run." },
 }
+-- с Bashful не работают: вторая Року, беготня, когти (она не ходит и не бьёт)
+SHY_BLOCK = { twins = true, zoomies = true, razor = true }
 local function baseInfo(id)
     for i, b in ipairs(BASES) do if b.id == id then return b, i end end
     return BASES[1], 1
@@ -25,6 +29,7 @@ local function mutAllowed(id, base)
     if base == "stealth" and m.noStealth then return false end
     if base == "nightmare" and m.noNightmare then return false end
     if base == "lovesick" and not m.loveOk then return false end
+    if base == "shy" and SHY_BLOCK[id] then return false end
     return true
 end
 
@@ -33,6 +38,7 @@ local function comboKey(base, rokus, mutKey)
     if base == "stealth" then return "stealth:" .. tostring(rokus) .. (mutKey and ("/" .. mutKey) or "") end
     if base == "nightmare" then return "nightmare" .. (mutKey and ("/" .. mutKey) or "") end
     if base == "lovesick" then return "lovesick:" .. tostring(P.selLoveMin) .. (mutKey and ("/" .. mutKey) or "") end
+    if base == "shy" then return "shy" .. (mutKey and ("/" .. mutKey) or "") end
     return mutKey or "normal"
 end
 

@@ -80,6 +80,7 @@ local function recordKey()
     if R.base == "stealth" then return "stealth:" .. tostring(R.rokus) .. (mk and ("/" .. mk) or "") end
     if R.base == "nightmare" then return "nightmare" .. (mk and ("/" .. mk) or "") end
     if R.base == "lovesick" then return "lovesick:" .. tostring(R.loveMin) .. (mk and ("/" .. mk) or "") end
+    if R.base == "shy" then return "shy" .. (mk and ("/" .. mk) or "") end
     return mk or "normal"
 end
 
@@ -90,7 +91,8 @@ function runLabel()
     local parts = {}
     if R.base == "stealth" then parts[#parts + 1] = "PURE STEALTH: " .. tostring(R.rokus) .. " ROKU"
     elseif R.base == "nightmare" then parts[#parts + 1] = "NIGHTMARE"
-    elseif R.base == "lovesick" then parts[#parts + 1] = "LOVESICK" end
+    elseif R.base == "lovesick" then parts[#parts + 1] = "LOVESICK"
+    elseif R.base == "shy" then parts[#parts + 1] = "BASHFUL" end
     if R.mode == "chaos" then parts[#parts + 1] = "CHAOS: " .. activeNames():upper()
     elseif R.mode == "pick" or R.mode == "random" then parts[#parts + 1] = activeNames():upper() end
     if #parts == 0 then
@@ -123,6 +125,7 @@ local function endRun(result)
     if R.base == "stealth" and stealthStop then stealthStop(result) end
     if nightmareStop then nightmareStop() end
     if loveStop then loveStop() end
+    if shyStop then shyStop() end
 
     local key = recordKey()
     local msg = string.format("%s  %s  apples %d", string.upper(result), fmtTime(R.finalTime, true), R.pines)
@@ -146,6 +149,7 @@ local function chaosPick()
     for _, id in ipairs(MUT_ORDER) do
         local m = MUTS[id]
         local ok = not (R.base == "stealth" and m.noStealth) and not (R.base == "nightmare" and m.noNightmare)
+            and not (R.base == "shy" and SHY_BLOCK and SHY_BLOCK[id])
         if m.chaos ~= false and id ~= cur and ok then pool[#pool + 1] = id end
     end
     if #pool == 0 then return cur end
@@ -194,6 +198,10 @@ local function startRun(mode, mutId)
     elseif R.base == "nightmare" then
         if flash then flash("+ NIGHTMARE +", 2.5) end
         if nightmareStart then nightmareStart() end
+    elseif R.base == "shy" then
+        if flash then flash("+ BASHFUL +", 2.5, MODE_COLOR.shy) end
+        if mode == "none" then showBanner("+ DON'T STARE AT HER +", 4) end
+        if shyStart then shyStart() end
     end
     -- мутатор (условия)
     if mode == "pick" or mode == "random" then
@@ -222,6 +230,7 @@ local function newRun(pawn)
     if stealthStop then stealthStop("new run") end
     if nightmareStop then nightmareStop() end
     if loveStop then loveStop() end
+    if shyStop then shyStop() end
     forgetGameRefs()          -- после остановки режимов: им ещё нужны старые данные, чтобы всё вернуть
     -- экран поражения прошлого забега больше не нужен
     UI.defeatGen, UI.defeatOn = (UI.defeatGen or 0) + 1, false

@@ -20,6 +20,7 @@
     mutators    мутаторы игрока
     nightmare   режим Nightmare
     lovesick    режим Lovesick
+    shy         режим Bashful (Скромница): Року-призрак, нельзя смотреть и подходить
     finish      последние хвосты и сообщение "Loaded"
 
   Файлы склеиваются в один кусок кода по порядку из FILES: local из раннего
@@ -28,7 +29,7 @@
 ]]
 
 local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "labfun", "stealth",
-                "endscreens", "darkness", "graphics", "mutators", "nightmare", "lovesick", "finish" }
+                "endscreens", "darkness", "graphics", "mutators", "nightmare", "lovesick", "shy", "finish" }
 
 local function say(m) print("[GON+] " .. tostring(m) .. "\n") end
 
