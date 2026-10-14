@@ -215,6 +215,8 @@ local SETTING_ROWS = {
       desc = "GON+ health and stamina bars instead of the game's own (they change color with modes)." },
     { key = "uiStyle",       label = "Interface", choices = { { "game", "game" }, { "term", "terminal" } },
       desc = "Game: windows like the game's pause menu. Terminal: a side panel like a computer in the complex (bars switch to match)." },
+    { key = "uiAnim",        label = "Animations", bool = true,
+      desc = "Game style: pages slide up and down inside the frame. Terminal: the panel slides off the screen and comes back with the new page." },
     { key = "barsStyle",     label = "Bars", choices = { { "corner", "corner" }, { "center", "center" }, { "term", "terminal" } },
       desc = "Corner: like the game. Center: wide bars at the bottom, stamina hides when full. Terminal: thin square bars with numbers." },
     { key = "labUnlocked",   label = "Developer lab (F1)", bool = true, only = function() return P.labUnlocked end,
@@ -300,6 +302,116 @@ function canGoBack()
     return UI.kind == "lab" or UI.screen == "pick" or UI.screen == "settings" or UI.screen == "graphics"
 end
 
+------------------------------------------------------------------------
+-- Анимации окна выбора (Settings -> Animations)
+--   стиль игры: страница внутри рамки уезжает вверх/вниз, новая въезжает с другой стороны
+--   терминал:   вся панель уезжает за левый край и возвращается уже с новым экраном
+-- Смена экрана = две фазы: "out" (старое уезжает, содержимое не трогаем) и "in" (новое въезжает).
+-- Любая клавиша/клик во время "out" сразу доводит анимацию до конца — ввод не теряется.
+------------------------------------------------------------------------
+; (function()
+local OUT, IN, OPEN, CLOSE = 0.11, 0.17, 0.22, 0.16   -- секунды
+local SLIDE = 70                                     -- на сколько едет страница в стиле игры
+local DEPTH = { main = 0, pick = 1, settings = 1, random = 1, graphics = 2 }
+
+local function now()
+    local t = nil
+    pcall(function() t = num(statics():GetRealTimeSeconds(getPC())) end)
+    return t or os.clock()
+end
+local function easeOut(k) k = 1 - k; return 1 - k * k * k end
+local function easeIn(k) return k * k * k end
+
+local function setT(w, x, y) if valid(w) then pcall(function() w:SetRenderTranslation({ X = x, Y = y }) end) end end
+local function setO(w, a) if valid(w) then pcall(function() w:SetRenderOpacity(a) end) end end
+
+local function reset()
+    for _, v in pairs(UI.views or {}) do
+        setT(v.panel, 0, 0); setO(v.panel, 1)
+        setT(v.cv, 0, 0); setO(v.cv, 1)
+    end
+end
+
+-- как выглядит окно при прогрессе k (0..1) текущей фазы
+local function apply(a, k)
+    local v = UI.view; if not v or not v.L then return end
+    local term = v.L.term
+    if term then
+        local off = -(v.L.w + 40)
+        if a.phase == "out" or a.phase == "close" then setT(v.panel, off * easeIn(k), 0)
+        else setT(v.panel, off * (1 - easeOut(k)), 0) end
+        return
+    end
+    if a.phase == "out" then
+        setT(v.cv, 0, -a.dir * SLIDE * easeIn(k)); setO(v.cv, 1 - k)
+    elseif a.phase == "in" then
+        setT(v.cv, 0, a.dir * SLIDE * (1 - easeOut(k))); setO(v.cv, k)
+        if a.open then setO(v.panel, math.min(1, k * 1.6)) end
+    elseif a.phase == "close" then
+        setO(v.panel, 1 - k)
+    end
+end
+
+local function enabled() return P.uiAnim and UI.kind ~= "lab" end
+
+-- вызывается из refreshUI: true = содержимое сейчас не обновлять (старое ещё уезжает)
+function menuAnimGate()
+    local key = UI.kind .. ":" .. UI.screen
+    local prev = UI.animKey
+    if prev == key then return UI.anim ~= nil and UI.anim.phase == "out" end
+    UI.animKey = key
+    if not enabled() or (prev and prev:find("^lab")) then UI.anim = nil; reset() return false end
+    if prev == nil then
+        UI.anim = { phase = "in", t0 = now(), dir = 1, open = true }
+        apply(UI.anim, 0)
+        return false
+    end
+    if UI.anim and UI.anim.phase == "out" then return true end   -- уже уезжает: приедет новое
+    local a, b = prev:match(":(.*)$"), UI.screen
+    UI.anim = { phase = "out", t0 = now(), dir = ((DEPTH[b] or 1) >= (DEPTH[a] or 0)) and 1 or -1 }
+    apply(UI.anim, 0)
+    return true
+end
+
+-- закрытие окна: true = панель пока не прятать (уезжает/гаснет)
+function menuAnimClose()
+    UI.animKey = nil
+    if not enabled() or not UI.view or not UI.view.L then UI.anim = nil; reset() return false end
+    UI.anim = { phase = "close", t0 = now(), dir = 1 }
+    return true
+end
+function menuAnimClosing() return UI.anim ~= nil and UI.anim.phase == "close" end
+
+-- ввод во время анимации: довести до конца сразу
+function menuAnimSkip()
+    local a = UI.anim
+    if not a or a.phase == "close" then return end
+    UI.anim = nil
+    reset()
+    if a.phase == "out" then refreshUI() end
+end
+function menuAnimBusy() return UI.anim ~= nil end
+
+every(10, function()
+    local a = UI.anim; if not a then return end
+    local dur = a.phase == "out" and OUT or (a.phase == "close" and CLOSE or (a.open and OPEN or IN))
+    local k = (now() - a.t0) / dur
+    if k < 1 then apply(a, math.max(0, k)) return end
+    if a.phase == "out" then
+        UI.anim = { phase = "in", t0 = now(), dir = a.dir }
+        apply(UI.anim, 0)
+        refreshUI()                 -- теперь новое содержимое
+    elseif a.phase == "close" then
+        UI.anim = nil
+        reset()
+        refreshUI()                 -- спрятать окно
+    else
+        UI.anim = nil
+        reset()
+    end
+end)
+end)()
+
 refreshUI = function()
     if not valid(UI.widget) then return end
     -- окно
@@ -307,6 +419,7 @@ refreshUI = function()
         local title, sub, items, foot = SCREENS[UI.screen]()
         local game = UI.kind ~= "lab"
         useView(game and (P.uiStyle == "term" and "term" or "game") or "lab")
+        if menuAnimGate() then goto content_done end
         local term = UI.view.L and UI.view.L.term
         local T = (UI.view.L and UI.view.L.theme) or {}
         if term then
@@ -401,11 +514,14 @@ refreshUI = function()
         end
         local cur = items[UI.sel]
         setText(UI.desc, cur and cur.desc or "")
+        ::content_done::
     end
     if not UI.view then useView("game") end
     -- окно ловит мышь (Visible): тогда колёсико и нажатия доходят до нашего виджета
-    if valid(UI.panel) then UI.panel:SetVisibility(UI.open and 0 or VIS_HIDE) end
-    if valid(UI.dim) then UI.dim:SetVisibility((UI.open and UI.kind ~= "lab") and VIS_SHOW or VIS_HIDE) end
+    -- (закрывается с анимацией — пока видно, но мышь уже не ловит)
+    local closing = not UI.open and menuAnimClosing()
+    if valid(UI.panel) then UI.panel:SetVisibility(UI.open and 0 or (closing and 3 or VIS_HIDE)) end
+    if valid(UI.dim) then UI.dim:SetVisibility(((UI.open or closing) and UI.kind ~= "lab") and VIS_SHOW or VIS_HIDE) end
 end
 
 openChooser = function()
@@ -416,6 +532,7 @@ openChooser = function()
 end
 
 UI.close = function()
+    menuAnimClose()
     UI.open = false
     UI.roll = nil
     applyPause()

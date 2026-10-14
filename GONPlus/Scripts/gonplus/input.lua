@@ -4,6 +4,7 @@ local function onKey(key, fn)
     RegisterKeyBind(key, function()
         gameThread(function()
             if not UI.open then return end
+            menuAnimSkip()
             safe(fn)
             refreshUI()
         end)
@@ -178,6 +179,7 @@ end)
 -- наведение: только когда мышь сдвинулась, чтобы не мешать стрелкам
 every(33, function()
     if not chooserOpen() then UI.lastMouse = nil return end
+    if menuAnimBusy() then return end               -- пока окно едет, наведение не трогаем
     local x, y = mouseInMenu()
     if not x then return end
     -- сообщение в подзаголовке истекло
@@ -201,6 +203,7 @@ if Key.LEFT_MOUSE_BUTTON then
     RegisterKeyBind(Key.LEFT_MOUSE_BUTTON, function()
         gameThread(function()
             if not chooserOpen() then return end
+            menuAnimSkip()
             safe(function()
                 if backAtMouse() then goBack() return end
                 if tagAtMouse() then secretClick() return end
@@ -234,6 +237,7 @@ if Key.RIGHT_MOUSE_BUTTON then
     RegisterKeyBind(Key.RIGHT_MOUSE_BUTTON, function()
         gameThread(function()
             if not chooserOpen() then return end
+            menuAnimSkip()
             safe(goBack)
             refreshUI()
         end)

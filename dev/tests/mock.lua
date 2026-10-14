@@ -209,7 +209,7 @@ function LOAD(mainPath, settings)
     local root = mainPath:gsub("/", "\\"):match("^(.*)\\[Ss]cripts\\[^\\]+$") or "."
     SETTINGS_FILE = root .. "\\settings.txt"
     local f = io.open(SETTINGS_FILE, "w")
-    f:write(settings or "labUnlocked=1\n")
+    f:write(settings or "labUnlocked=1\nuiAnim=0\n")
     f:close()
     dofile(mainPath)
 end

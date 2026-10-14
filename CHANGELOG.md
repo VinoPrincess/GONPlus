@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Menu animations** (Settings → Animations, on by default). Game style: pages slide up and down inside the frame
+  (deeper screens go up, BACK goes down), the window fades in and out. Terminal: the panel slides off the left edge
+  and comes back with the new page. Any key or click during a slide finishes it at once.
 - **New interface style: Terminal** (Settings → Interface). The choice window becomes a full-height side panel
   like a computer in the complex: the game's monospace font, square corners, a blue line, `> ROW` selection.
   The game-style window stays the default.

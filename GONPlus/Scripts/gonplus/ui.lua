@@ -214,6 +214,8 @@ local function buildGameMenu(tree, canvas, L)
 
     local cv = construct("/Script/UMG.CanvasPanel", tree)
     frame:SetContent(cv)
+    v.cv = cv
+    pcall(function() frame:SetClipping(1) end)       -- ClipToBounds: страница при анимации не вылезает за рамку
 
     local function place(widget, x, y, w, h)
         local s2 = cv:AddChildToCanvas(widget)

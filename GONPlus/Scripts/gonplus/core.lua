@@ -232,6 +232,7 @@ local DEFAULTS = {
     barsCenter    = true,   -- (старое) полоски по центру; теперь barsStyle
     barsStyle     = "",     -- полоски: corner (как у игры) / center / term; "" = взять из barsCenter
     uiStyle       = "game", -- окно выбора: game (как меню паузы) / term (терминал слева)
+    uiAnim        = true,   -- анимации окна выбора
     lastMode      = "",     -- (старое, не используется)
     lastMut       = "",
     selBase       = "normal", -- выбранный режим: normal / stealth / nightmare
