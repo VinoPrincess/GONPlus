@@ -298,6 +298,26 @@ function menuClampSel()
     if UI.sel > #UI.items then UI.sel = #UI.items end
 end
 
+-- у пункта есть "листать": стрелки по краям кнопки
+function rowHasArrows(it)
+    if not it then return false end
+    if it.cycle then return true end
+    local s = it.setting
+    return s ~= nil and not s.bool
+end
+-- где мышь по ширине кнопки: -1 левая стрелка, 1 правая, 0 середина (x — от левого края кнопки)
+function arrowZoneAt(L, x)
+    local z = ARROW_ZONE or 64
+    if L.left then
+        if x >= L.rowW - z then return 1 end
+        if x >= L.rowW - 2 * z then return -1 end
+        return 0
+    end
+    if x <= z then return -1 end
+    if x >= L.rowW - z then return 1 end
+    return 0
+end
+
 function canGoBack()
     return UI.kind == "lab" or UI.screen == "pick" or UI.screen == "settings" or UI.screen == "graphics"
 end
@@ -501,6 +521,24 @@ refreshUI = function()
                     local main, extra = splitLabel(it.label)
                     if it.extra then extra = it.extra end
                     local on = idx == UI.sel
+                    -- стрелки по краям: у пунктов, которые листаются
+                    local arrows = rowHasArrows(it)
+                    if arrows then
+                        -- "<  game  >" в подписи больше не нужен: стрелки уже на кнопке
+                        extra = extra:gsub("^<%s*", ""):gsub("%s*>$", "")
+                        if extra == "click left / right side to change" then extra = "" end
+                    end
+                    if r.arrowL then
+                        local hz = on and UI.hoverZone or 0
+                        for side, a in pairs({ [-1] = r.arrowL, [1] = r.arrowR }) do
+                            a:SetVisibility(arrows and VIS_SHOW or VIS_HIDE)
+                            if arrows then
+                                local hot = hz == side
+                                setColor(a, hot and (T.sel or GAME.blue) or (on and (T.idle or GAME.idle) or { R = 1, G = 1, B = 1, A = 0.3 }))
+                                pcall(function() a:SetRenderScale({ X = hot and 1.35 or 1, Y = hot and 1.35 or 1 }) end)
+                            end
+                        end
+                    end
                     -- выбранная кнопка: синий текст в плюсах, синеватая заливка
                     -- в терминале: "> ПУНКТ" белым на синей подсветке
                     local shown

@@ -5,7 +5,7 @@ LOAD(arg[1], "labUnlocked=1\nuiAnim=1\n")
 run(800)
 goto_("SETTINGS"); key("RETURN"); run(400)
 goto_("INTERFACE"); key("LEFT_ARROW"); run(400)       -- game -> (назад по кругу) minimal
-check(hasText("^<  minimal  >$"), "interface switched to minimal")
+check(has("minimal"), "interface switched to minimal")
 check(has("+SETTINGS+"), "minimal title like +GOD+OF+NOTHING+")
 check(hasText("^— INTERFACE"), "selected row looks like '— ROW'")
 local f = io.open(SETTINGS_FILE); local st = f and f:read("a") or ""; if f then f:close() end

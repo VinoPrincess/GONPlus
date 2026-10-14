@@ -6,6 +6,8 @@
   game's button font right over the darkened game, like the game's main menu; `+NEW+RUN+` headings, `— ROW`
   selection, the description on the right behind a thin line. Animation: the text drifts away and the new page fades in.
 - **Bars: Lines** (Settings → Bars) — two thin lines at the bottom center; picked automatically with Minimal.
+- **Clearer buttons:** rows you can change show `<` and `>` at their edges (in Terminal / Minimal both sit on the right).
+  The edges change the value, the middle chooses; the arrow under the mouse lights up. No more guessing where to click.
 - Fixed: switching the interface style while scrolled down could move the selection to another row.
 - **Developer lab (F1): five new sections**, the old FunMenu moved in and new findings added.
   - *Player:* ghost flight, endless mask, heal, super speed, moon gravity, size, teleport where you look, save / return to a spot.

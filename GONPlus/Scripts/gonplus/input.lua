@@ -5,6 +5,7 @@ local function onKey(key, fn)
         gameThread(function()
             if not UI.open then return end
             menuAnimSkip()
+            UI.hoverZone = 0            -- клавиатура: подсветку стрелки от мыши снимаем
             safe(fn)
             refreshUI()
         end)
@@ -84,7 +85,7 @@ local function itemAtMouse()
     local idx = math.floor(yy / L.rowStep) + 1
     if yy - (idx - 1) * L.rowStep > L.rowH then return nil end            -- в промежутке
     if not UI.items[idx] then return nil end
-    return idx, (x - L.rowX) / L.rowW
+    return idx, (x - L.rowX) / L.rowW, arrowZoneAt(L, x - L.rowX)
 end
 
 local function chooserOpen() return UI.open and UI.view and UI.view.L end
@@ -195,8 +196,14 @@ every(33, function()
     if lm and math.abs(x - lm.x) < 1 and math.abs(y - lm.y) < 1 then return end
     UI.lastMouse = { x = x, y = y }
     if not lm then return end            -- первый замер после открытия
-    local idx = itemAtMouse()
-    if idx and idx ~= UI.sel then UI.sel = idx; refreshUI() end
+    local idx, _, zone = itemAtMouse()
+    -- подсветка стрелки под мышью: видно, что клик сейчас поменяет значение
+    zone = (idx and rowHasArrows(UI.items[idx])) and zone or 0
+    if (idx and idx ~= UI.sel) or zone ~= (UI.hoverZone or 0) then
+        if idx then UI.sel = idx end
+        UI.hoverZone = zone
+        refreshUI()
+    end
 end)
 
 if Key.LEFT_MOUSE_BUTTON then
@@ -209,20 +216,19 @@ if Key.LEFT_MOUSE_BUTTON then
                 if tagAtMouse() then secretClick() return end
                 local sy = scrollbarAtMouse()
                 if sy then scrollTo(sy); UI.dragging = true return end
-                local idx, frac = itemAtMouse()
+                local idx, frac, zone = itemAtMouse()
                 if not idx then return end
                 UI.sel = idx
                 local it = UI.items[idx]
+                -- стрелки по краям ("<" ">") меняют значение; середина — выбрать / включить,
+                -- а если выбирать нечего — тоже листает вперёд
                 if it.setting then
-                    -- числовая настройка: левая часть кнопки — меньше, правая — больше
                     if it.setting.bool then changeSetting(it.setting, 1)
-                    else changeSetting(it.setting, frac < 0.5 and -1 or 1) end
-                elseif it.cycle and it.act and frac > 0.3 and frac < 0.7 then
-                    it.act()                                   -- середина кнопки — выбрать
-                elseif it.cycle and it.act then
-                    it.cycle(frac < 0.5 and -1 or 1)
+                    else changeSetting(it.setting, zone ~= 0 and zone or 1) end
+                elseif it.cycle and it.act and zone == 0 then
+                    it.act()
                 elseif it.cycle then
-                    it.cycle(frac < 0.5 and -1 or 1)
+                    it.cycle(zone ~= 0 and zone or 1)
                 elseif it.labNum and labNumChange then
                     labNumChange(frac < 0.5 and -1 or 1)
                 elseif it.act then

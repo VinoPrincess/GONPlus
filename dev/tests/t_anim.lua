@@ -13,7 +13,7 @@ key("BACKSPACE"); key("DOWN_ARROW")
 check(TITLE() and TITLE():find("NEW RUN"), "input during the slide finishes it at once")
 goto_("SETTINGS"); key("RETURN"); run(400)
 goto_("INTERFACE"); key("RIGHT_ARROW"); run(400)
-check(hasText("^<  terminal  >$"), "terminal with animations")
+check(has("terminal"), "terminal with animations")
 key("BACKSPACE"); run(400)
 check(has("NEW RUN"), "terminal: back to main after the panel returns")
 for _ = 1, 40 do if has("> START") then break end key("DOWN_ARROW") end

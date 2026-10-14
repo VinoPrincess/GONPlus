@@ -182,6 +182,8 @@ local MINMENU = {
     left = true, minimal = true, uniform = true, radius = 0, pillRadius = 0,
 }
 local GAME_ROWS = MENU.rows
+-- ширина зоны стрелки "<" / ">" на краю кнопки (и для мыши, и для рисования)
+ARROW_ZONE = 64
 
 -- цвета окна: по умолчанию как меню паузы игры, у терминала свои
 local THEME_GAME = {
@@ -295,10 +297,40 @@ local function buildGameMenu(tree, canvas, L)
         local pill = construct("/Script/UMG.Border", tree)
         -- радиус = половина высоты: полностью круглые края, как кнопки игры
         roundBrush(pill, T.pillOff, T.pillLine, T.pillLineW, L.pillRadius or (L.rowH / 2))
-        pcall(function() pill:SetPadding({ Left = L.left and 14 or 24, Top = 1, Right = 24, Bottom = 1 }) end)
-        pcall(function() pill:SetHorizontalAlignment(HALIGN); pill:SetVerticalAlignment(2) end)
+        pcall(function() pill:SetPadding({ Left = 0, Top = 1, Right = 0, Bottom = 1 }) end)
+        pcall(function() pill:SetHorizontalAlignment(0); pill:SetVerticalAlignment(0) end)
+        -- внутри кнопки: подпись + стрелки "<" ">" по краям (у пунктов, которые листаются):
+        -- сразу видно, что края меняют значение, а середина — выбрать
+        local ov = construct("/Script/UMG.Overlay", tree)
+        pill:SetContent(ov)
         local inner = construct("/Script/UMG.VerticalBox", tree)
-        pill:SetContent(inner)
+        local ins = ov:AddChildToOverlay(inner)
+        pcall(function()
+            ins:SetHorizontalAlignment(HALIGN); ins:SetVerticalAlignment(2)
+            ins:SetPadding({ Left = L.left and 14 or 24, Top = 0, Right = 24, Bottom = 0 })
+        end)
+        local arrows = {}
+        for k, side in ipairs({ -1, 1 }) do
+            local t = construct("/Script/UMG.TextBlock", tree)
+            t:SetText(FText(side < 0 and "<" or ">"))
+            setFont(t, "main", math.max(14, L.rowSize - 4)); center(t); setColor(t, T.idle)
+            local sb = construct("/Script/UMG.SizeBox", tree)
+            pcall(function() sb:SetWidthOverride(ARROW_ZONE) end)
+            sb:SetContent(t)
+            local as = ov:AddChildToOverlay(sb)
+            pcall(function()
+                as:SetVerticalAlignment(2)
+                if L.left then
+                    -- текст слева: обе стрелки справа, "<" перед ">"
+                    as:SetHorizontalAlignment(3)
+                    as:SetPadding({ Left = 0, Top = 0, Right = side < 0 and ARROW_ZONE or 0, Bottom = 0 })
+                else
+                    as:SetHorizontalAlignment(side < 0 and 1 or 3)
+                end
+            end)
+            t:SetVisibility(VIS_HIDE)
+            arrows[k] = t
+        end
         local main = construct("/Script/UMG.TextBlock", tree)
         setFont(main, L.rowFont, L.rowSize); align(main); setColor(main, T.idle)
         local ms = inner:AddChildToVerticalBox(main)
@@ -315,7 +347,7 @@ local function buildGameMenu(tree, canvas, L)
         local vs = vlist:AddChildToVerticalBox(sz)
         pcall(function() vs:SetPadding({ Left = 0, Top = 0, Right = 0, Bottom = L.rowStep - L.rowH }) end)
         sz:SetVisibility(VIS_HIDE)
-        v.rows[i] = { box = sz, pill = pill, main = main, extra = extra }
+        v.rows[i] = { box = sz, pill = pill, main = main, extra = extra, arrowL = arrows[1], arrowR = arrows[2] }
     end
 
     -- "ещё выше / ещё ниже": видно, что список длиннее; наведение листает, клик — страницу
