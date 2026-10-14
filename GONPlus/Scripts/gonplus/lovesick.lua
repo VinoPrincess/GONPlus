@@ -361,7 +361,7 @@ loveStart = function(minutes)
     LV.on, LV.lost, LV.won = true, false, false
     LV.limit, LV.t0 = (minutes or 8) * 60, gameNow() or 0
     LV.love, LV.rokus, LV.lastHug, LV.thrown, LV.finalLeft = 0, {}, -100, nil, nil
-    LV.nextPing = LV.t0 + rnd(70, 100)
+    LV.nextPing = LV.t0 + rnd(40, 55)
     LV.finalAnnounced = false
     LV.killed, LV.nextSweep = {}, LV.t0 + 3
     setHiders(true)
@@ -458,7 +458,8 @@ every(100, function()
         if g >= LV.nextPing then LV.nextPing = g + 4; lovePing(g, true) end
     elseif g >= LV.nextPing then
         local k = math.max(0, math.min(1, (g - LV.t0) / math.max(1, LV.limit - FINAL)))
-        LV.nextPing = g + rnd(70, 100) * (1 - k) + rnd(25, 35) * k
+        -- было 70-100 с в начале и 25-35 к концу: в середине она надолго теряла игрока
+        LV.nextPing = g + rnd(40, 55) * (1 - k) + rnd(15, 20) * k
         lovePing(g, false)
     end
     -- выжил: вместе

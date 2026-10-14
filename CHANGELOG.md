@@ -6,6 +6,7 @@
   Every "love power" ping sent her to where you *were*; she looked around the empty spot, wandered off,
   and 4 seconds later got a new spot — and she could only hug while chasing. Now in the final phase she
   chases you all the time, seen or not; earlier, when a ping brings her close to you, she switches to the chase too.
+- Lovesick: "love power" comes more often — every 40–55 s at the start, every 15–20 s before the final (was 70–100 and 25–35).
 - **Menu animations** (Settings → Animations, on by default). Game style: pages slide up and down inside the frame
   (deeper screens go up, BACK goes down), the window fades in and out. Terminal: the panel slides off the left edge
   and comes back with the new page. Any key or click during a slide finishes it at once.
