@@ -62,6 +62,8 @@ One per run (or let fate decide).
 - **Speedrun panel** — time, apples and the split against your best run.
 - **GON+ health and stamina bars** — at the bottom center or in the corner like the game; they change color with the mode.
 - **Victory and defeat screens** for every mode and mutator.
+- **Graphics / FPS** (in Settings) — render scale, shadows, reflections, fog, anti-aliasing, FPS limit,
+  presets and an FPS counter. For PCs where the game drops frames.
 - Everything is configurable in **Settings**.
 
 ## For developers

@@ -2,7 +2,7 @@
 -- Все файлы gonplus\*.lua склеиваются загрузчиком (main.lua) в один кусок по порядку,
 -- поэтому local из этого файла видны в следующих. Порядок файлов важен.
 
-local VERSION = "1.0.1"
+local VERSION = "1.1.0-test"
 local AUTHOR = "VinoPrincess"
 -- лаборатория разработчика (F1): true — открывается 7 кликами по "+GON+PLUS+" в окне выбора;
 -- "always" — сразу; false — вырезана совсем
@@ -237,6 +237,16 @@ local DEFAULTS = {
     selMut        = "none",   -- none / random / chaos / id мутатора
     selLoveMin    = 8,        -- минут в Lovesick
     labUnlocked   = false,    -- лаборатория открыта секретными кликами
+    -- графика (Settings -> Graphics): 0 = как у игры, иначе номер варианта (graphics.lua)
+    gfxRes        = 0,
+    gfxQuality    = 0,
+    gfxShadows    = 0,
+    gfxReflect    = 0,
+    gfxFog        = 0,
+    gfxAA         = 0,
+    gfxFx         = 0,
+    gfxFpsCap     = 0,
+    gfxFpsShow    = false,    -- счётчик FPS слева сверху
 }
 local P = deepcopy(DEFAULTS)
 local SETTINGS_PATH = ROOT .. "\\settings.txt"

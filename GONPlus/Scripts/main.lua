@@ -15,6 +15,7 @@
     stealth     режим Pure Stealth
     endscreens  экраны поражения и победы
     darkness    настоящая темнота (лампы, небо, тени, виньетка) для Nightmare и реактора
+    graphics    Settings -> Graphics: разрешение рендера, тени, отражения, лимит и счётчик FPS
     mutators    мутаторы игрока
     nightmare   режим Nightmare
     lovesick    режим Lovesick
@@ -26,7 +27,7 @@
 ]]
 
 local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "stealth",
-                "endscreens", "darkness", "mutators", "nightmare", "lovesick", "finish" }
+                "endscreens", "darkness", "graphics", "mutators", "nightmare", "lovesick", "finish" }
 
 local function say(m) print("[GON+] " .. tostring(m) .. "\n") end
 

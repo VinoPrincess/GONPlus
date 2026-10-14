@@ -489,6 +489,19 @@ local function buildUI()
         UI.nightTag, UI.nightSlot = t, ns
     end
 
+    -- счётчик FPS (Settings -> Graphics), слева сверху
+    do
+        local t = construct("/Script/UMG.TextBlock", tree)
+        t:SetText(FText(""))
+        setColor(t, { R = 1, G = 1, B = 1, A = 0.75 })
+        setFont(t, "main", 16)
+        local fs = canvas:AddChildToCanvas(t)
+        pcall(function() fs:SetAutoSize(true) end)
+        pcall(function() fs:SetPosition({ X = 14, Y = 8 }) end)
+        t:SetVisibility(VIS_HIDE)
+        UI.fpsText = t
+    end
+
     -- крупная надпись посреди экрана, как подсказки игры ("SHE KNOWS")
     do
         local t = construct("/Script/UMG.TextBlock", tree)

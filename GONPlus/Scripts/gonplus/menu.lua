@@ -115,7 +115,7 @@ SCREENS.main = function()
             or (P.selMut == "random" and "Fate picks one mutator when you start. No rerolls.")
             or (MUTS[P.selMut] and MUTS[P.selMut].desc) or "No mutator.",
         act = function() UI.screen = "pick"; UI.sel = 1 end }
-    items[#items + 1] = { label = "Settings", desc = "Chaos timing, speedrun panel, bars.",
+    items[#items + 1] = { label = "Settings", desc = "Graphics and FPS, chaos timing, speedrun panel, bars.",
         act = function() UI.screen = "settings"; UI.sel = 1 end }
     return "NEW RUN", "Mode + mutator. Your choice is remembered.", items, "click / Enter - choose    sides / arrows - change"
 end
@@ -221,6 +221,9 @@ local SETTING_ROWS = {
 
 SCREENS.settings = function()
     local items = {}
+    items[1] = { label = "Graphics / FPS", extra = "open",
+        desc = "Render scale, shadows, reflections, FPS limit and an FPS counter. For PCs where the game drops frames.",
+        act = function() UI.screen = "graphics"; UI.sel = 1 end }
     for _, r in ipairs(SETTING_ROWS) do
       if not r.only or r.only() then
         local v = P[r.key]
@@ -288,7 +291,7 @@ function menuClampSel()
 end
 
 function canGoBack()
-    return UI.kind == "lab" or UI.screen == "pick" or UI.screen == "settings"
+    return UI.kind == "lab" or UI.screen == "pick" or UI.screen == "settings" or UI.screen == "graphics"
 end
 
 refreshUI = function()

@@ -19,9 +19,23 @@ PAWN_ADDR = 1
 PAWN = { health = 1.0, pinecollected = 0, IsMaskOn = false, CharacterMovement = { GravityScale = 1.0 } }
 ROKU = { CustomTimeDilation = 1.0 }
 TEXTS = {}
+-- консольные переменные движка (графика); значения "как у игры"
+CVARS = { ["r.ScreenPercentage"] = 100, ["r.Shadow.Virtual.Enable"] = 1, ["r.ReflectionMethod"] = 1,
+          ["r.AntiAliasingMethod"] = 4, ["t.MaxFPS"] = 0, ["sg.ShadowQuality"] = 3 }
+CONSOLE = {}
+FRAME_DT = 1 / 60
 
 mt.__index = function(t, k)
     if k == "IsValid" then return function() return true end end
+    if k == "GetConsoleVariableFloatValue" or k == "GetConsoleVariableIntValue" then
+        return function(_, n) return CVARS[tostring(n)] or 0 end end
+    if k == "ExecuteConsoleCommand" then return function(_, _, cmd)
+        cmd = tostring(cmd); CONSOLE[#CONSOLE + 1] = cmd
+        local n, v = cmd:match("^(%S+)%s+(%-?[%d%.]+)$")
+        if n then CVARS[n] = tonumber(v) end
+    end end
+    if k == "GetWorldDeltaSeconds" then return function() return FRAME_DT end end
+    if k == "GetRealTimeSeconds" then return function() return SIM_NOW / 1000 end end
     if k == "GetAddress" then return function() return tostring(t) end end
     if k == "GetTimeSeconds" then return function() return GAME_T end end
     if k == "SetGamePaused" then return function(_, _, v) PAUSED = v; print("  [pause=" .. tostring(v) .. "]") end end

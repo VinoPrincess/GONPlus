@@ -37,7 +37,8 @@ onKey(Key.RETURN, function()
     end
 end)
 local function goBack()
-    if UI.screen == "pick" or UI.screen == "settings" then UI.screen = "main"; UI.sel = 1 end
+    if UI.screen == "graphics" then UI.screen = "settings"; UI.sel = 1
+    elseif UI.screen == "pick" or UI.screen == "settings" then UI.screen = "main"; UI.sel = 1 end
     if UI.kind == "lab" then UI.close() end
     -- со случайного назад нельзя: никаких перевыборов
 end

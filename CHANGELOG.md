@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Settings → Graphics / FPS** — for PCs where the game drops frames (reported on AMD cards):
+  render scale, overall quality, faster shadows (no Unreal 5 virtual shadows), cheaper reflections,
+  volumetric fog, anti-aliasing, light effects, FPS limit, quick presets (game / balanced / max FPS)
+  and an FPS counter (average and the lowest value of the last 5 seconds).
+  Everything is engine console variables: "game" leaves the game's own value, nothing in game files changes.
+  The mod keeps the chosen values when the game overwrites them, and writes a graphics report to `UE4SS.log`.
 - Stability: the mod no longer keeps references to Rokus or hiding spots between ticks — it stores their
   addresses and looks the live object up again (Lovesick, Nightmare, Pure Stealth extras, Twins, Meltdown, lab).
 - Code: the darkness module has its own scope (headroom under Lua's 200-locals limit).
