@@ -48,6 +48,7 @@ One per run (or let fate decide).
 | Mutator | |
 |---|---|
 | **Reactor** | A countdown to the blast, three levels: **Failure** (30 min, flickering lights, red alarm at the end) · **Critical failure** (20 min, power failures plunge the complex into darkness) · **Meltdown** (17 min, red from the start, longer blackouts, heat slows stamina recovery, Roku gets faster in the last 3 minutes) |
+| **Zero Hour** | One minute on the clock. Every apple adds 20 seconds (2:30 at most) — the clock is always nearly empty. |
 | **Slippery Hands** | The item you hold slips out of your hands now and then. |
 | **SUTEGOMA** | You are bleeding out. More medkits around. |
 | **Twins** | A second Roku roams the map. |

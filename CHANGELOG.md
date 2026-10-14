@@ -2,6 +2,9 @@
 
 ## Unreleased (1.1)
 
+- **New mutator: Zero Hour.** One minute on the clock; every apple adds 20 seconds, but you can bank 2:30 at most —
+  the clock is always nearly empty. Run, plan your vents, don't miss apples. Time out = defeat.
+  The timer turns blue / pink / red at 40 / 20 / 10 seconds and shakes only in the last 10.
 - **New interface style: Minimal** (Settings → Interface: game / terminal / minimal). No window: big text in the
   game's button font right over the darkened game, like the game's main menu; `+NEW+RUN+` headings, `— ROW`
   selection, the description on the right behind a thin line. Animation: the text drifts away and the new page fades in.

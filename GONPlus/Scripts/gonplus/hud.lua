@@ -11,9 +11,14 @@ local function updateHud()
 
     -- мутатор с обратным отсчётом (реактор): вместо секундомера — сколько осталось
     local cd = nil
+    local short = false       -- короткие часы (Zero Hour): пороги цвета/тряски в секундах, а не в минутах
     for _, id in ipairs(ACTIVE_LIST) do
         local m = MUTS[id]
-        if m.countdown then local ok, left = pcall(m.countdown, m.state); if ok then cd = left end break end
+        if m.countdown then
+            local ok, left = pcall(m.countdown, m.state); if ok then cd = left end
+            short = m.shortClock == true
+            break
+        end
     end
     local lovesick = R.base == "lovesick"
     if lovesick and loveLeft then cd = loveLeft() end
@@ -40,13 +45,15 @@ local function updateHud()
             goto hud_rest
         end
         local col = GAME.white
-        if cd <= 60 then col = GAME.warn
-        elseif cd <= 300 then col = { R = 1, G = 0.45, B = 0.5, A = 1 }
-        elseif cd <= 600 then col = GAME.blue end
+        local tRed, tPink, tBlue = 60, 300, 600
+        if short then tRed, tPink, tBlue = 10, 20, 40 end
+        if cd <= tRed then col = GAME.warn
+        elseif cd <= tPink then col = { R = 1, G = 0.45, B = 0.5, A = 1 }
+        elseif cd <= tBlue then col = GAME.blue end
         setColor(L.time, col)
         -- пульс раз в секунду в последнюю минуту
         local sc = 1
-        if cd <= 60 and R.phase == "running" then
+        if cd <= tRed and R.phase == "running" then
             local frac = cd - math.floor(cd)
             sc = 1 + 0.18 * math.max(0, frac - 0.75) / 0.25
         end
@@ -54,7 +61,9 @@ local function updateHud()
         -- тряска панели: сильнее с каждым рубежом
         local amp = 0
         if R.phase == "running" then
-            if cd <= 10 then amp = 9 elseif cd <= 60 then amp = 5 elseif cd <= 300 then amp = 2.5 elseif cd <= 600 then amp = 1.2 end
+            if short then
+                if cd <= 5 then amp = 7 elseif cd <= 10 then amp = 3 end
+            elseif cd <= 10 then amp = 9 elseif cd <= 60 then amp = 5 elseif cd <= 300 then amp = 2.5 elseif cd <= 600 then amp = 1.2 end
         end
         pcall(function()
             UI.hudSlot:SetPosition({ X = -P.hudX + (math.random() * 2 - 1) * amp, Y = P.hudY + (math.random() * 2 - 1) * amp })
@@ -228,6 +237,7 @@ MODE_COLOR = {
 }
 MUT_COLOR = {
     reactor  = { R = 1.0, G = 0.45, B = 0.15 }, critical = { R = 1.0, G = 0.45, B = 0.15 }, meltdown = { R = 1.0, G = 0.45, B = 0.15 },
+    zerohour = { R = 0.3, G = 0.85, B = 1.0 },
     slippery = { R = 0.55, G = 0.9, B = 1.0 },
     sutegoma = { R = 0.95, G = 0.12, B = 0.18 },
     twins    = { R = 0.8, G = 0.55, B = 1.0 },

@@ -127,7 +127,7 @@ local function endRun(result)
     local key = recordKey()
     local msg = string.format("%s  %s  apples %d", string.upper(result), fmtTime(R.finalTime, true), R.pines)
     if R.cheated then msg = msg .. "   (lab: no record)" end
-    if key and not R.cheated and (result == "dead" or result == "win" or result == "caught" or result == "meltdown" or result == "lovesick") then
+    if key and not R.cheated and (result == "dead" or result == "win" or result == "caught" or result == "meltdown" or result == "zerohour" or result == "lovesick") then
         if R.base == "lovesick" and lovePercent then R.pines = 100 - lovePercent() end
         local new = { pines = R.pines, time = R.finalTime, win = result == "win", splits = R.splits, love = R.base == "lovesick" }
         if isBetter(new, RECORDS[key]) then

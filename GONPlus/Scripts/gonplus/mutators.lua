@@ -291,6 +291,52 @@ reactor("meltdown", "Meltdown",
     "17 minutes. Red from the start, longer and more frequent blackouts, the heat slows stamina recovery, and in the last 3 minutes Roku gets faster.")
 
 ------------------------------------------------------------------------
+-- Zero Hour: на старте одна минута, каждое яблоко (образец) добавляет время.
+-- Запас ограничен — часы всегда почти на нуле: беги, считай вентиляции и яблоки.
+------------------------------------------------------------------------
+ZERO = { start = 60, bonus = 20, cap = 150 }
+mutator {
+    id = "zerohour", name = "Zero Hour", tags = { "timer" }, chaos = false, shortClock = true,
+    desc = "One minute on the clock. Every apple adds 20 seconds (2:30 at most). Move fast, plan your vents.",
+    countdown = function(s) return s.limit - ((gameNow() or 0) - s.t0) end,
+    on = function(s)
+        s.t0, s.limit, s.warned = gameNow() or 0, ZERO.start, {}
+        local p = getPawn()
+        s.pines = p and num(p.pinecollected) or 0
+    end,
+    tick = function(s)
+        local g = gameNow() or 0
+        local left = s.limit - (g - s.t0)
+        -- яблоко: + время (не больше запаса)
+        local p = getPawn()
+        local pines = p and num(p.pinecollected)
+        if pines and pines > (s.pines or 0) then
+            local n = pines - (s.pines or 0)
+            s.pines = pines
+            local add = math.min(n * ZERO.bonus, math.max(0, ZERO.cap - left))
+            s.limit = s.limit + add
+            left = left + add
+            s.warned = {}
+            local msg = add > 0 and string.format("+ %d SECONDS +", math.floor(add + 0.5)) or "+ CLOCK IS FULL +"
+            flash(msg, 1.6, MUT_COLOR.zerohour)
+            log(string.format("Zero Hour: apple, +%.0f s -> %.0f s left", add, left))
+        end
+        for _, w in ipairs({ 30, 10 }) do
+            if left <= w and left > w - 3 and not s.warned[w] then
+                s.warned[w] = true
+                flash(string.format("+ %d SECONDS +", w), 1.5, GAME.warn)
+            end
+        end
+        if left <= 0 and not s.boom then
+            s.boom = true
+            deathScene({ title = "+ ZERO HOUR +", sub = "The clock ran out before you did.",
+                veil = { 0.02, 0.03, 0.08 }, color = MUT_COLOR.zerohour, fadeIn = 1.4, hold = 4, result = "zerohour" })
+        end
+    end,
+    off = function(s) end,
+}
+
+------------------------------------------------------------------------
 -- Скользкие руки: предмет время от времени выпадает (слабый бросок, как F)
 ------------------------------------------------------------------------
 -- Бросок предмета у игры: BP_ThrowableBase:Throw(ThrowDirection, PlayerRef).
@@ -643,6 +689,7 @@ do
         nofood   = { "+ NO TREATS +", "Trash only buys you a second. She wanted an apple." },
         zoomies  = { "+ TOO FAST +", "She never even needed to catch her breath." },
         razor    = { "+ SHREDDED +", "Those claws were sharper than usual." },
+        zerohour = { "+ SHE GOT YOU FIRST +", "The clock was ticking. She was faster." },
     }
     for id, e in pairs(L) do
         if MUTS[id] then MUTS[id].lose = { title = e[1], sub = e[2], veil = e[3], color = e[4] } end
@@ -651,7 +698,7 @@ end
 
 -- порядок в меню: сначала мутаторы игрока, потом старые тестовые
 do
-    local want = { "reactor", "critical", "meltdown", "slippery", "sutegoma", "twins", "nofood", "zoomies", "razor" }
+    local want = { "reactor", "critical", "meltdown", "zerohour", "slippery", "sutegoma", "twins", "nofood", "zoomies", "razor" }
     local seen, order = {}, {}
     for _, id in ipairs(want) do if MUTS[id] then order[#order + 1] = id; seen[id] = true end end
     for _, id in ipairs(MUT_ORDER) do if not seen[id] then order[#order + 1] = id end end
