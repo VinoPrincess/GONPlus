@@ -6,13 +6,15 @@ A UE4SS Lua mod. No cheats — you only choose *how* you want to play.
 A choice window opens at the start of every run: pick a mode, a mutator, and go.
 Every combination keeps its own best run.
 
+Also available on [Nexus Mods](https://www.nexusmods.com/gongodofnothing/mods/5).
+
 ---
 
 ## Install
 
 1. Install [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases) for the game — **the experimental build** (`experimental-latest`, the `UE4SS_v3.x.x-...zip` file, not `zDEV`).
    The old stable **v3.0.1 is too old** for this game (Unreal 5.7) and can crash with mods.
-2. Download `GONPlus-<version>.zip` from [Releases](../../releases) and unpack it into
+2. Download `GONPlus-<version>.zip` from [Releases](../../releases) (or from [Nexus Mods](https://www.nexusmods.com/gongodofnothing/mods/5)) and unpack it into
    ```
    ...\GON God Of Nothing\Roku3\Binaries\Win64\ue4ss\Mods\
    ```
@@ -86,4 +88,4 @@ This mod contains no game files. Licensed under the [MIT License](LICENSE).
 ### По-русски
 
 GON+ — мод для GON: God of Nothing: режимы (Pure Stealth, Nightmare, Lovesick), мутаторы и рекорды, без читов.
-Установка: UE4SS → распаковать архив из Releases в `...\Roku3\Binaries\Win64\ue4ss\Mods\`.
+Установка: UE4SS (экспериментальная сборка) → распаковать архив из Releases или с [Nexus Mods](https://www.nexusmods.com/gongodofnothing/mods/5) в `...\Roku3\Binaries\Win64\ue4ss\Mods\`.
