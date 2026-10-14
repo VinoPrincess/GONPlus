@@ -1254,8 +1254,12 @@ SCREENS.lab = function()
           act = function() UI.labStatus = scanMutators and scanMutators() or "not ready" end },
     }
     -- вкладки: раскладываем пункты по разделам по началу подписи
-    local TABS = { { id = "run", name = "Run" }, { id = "dark", name = "Darkness" },
-                   { id = "roku", name = "Roku" }, { id = "scan", name = "Scans" } }
+    local TABS = { { id = "run", name = "Run" } }
+    -- новые вкладки (labfun.lua): игрок, Року, чувства, предметы, мир
+    for _, t in ipairs(LAB_EXTRA_TABS or {}) do TABS[#TABS + 1] = t end
+    for _, t in ipairs({ { id = "dark", name = "Darkness" }, { id = "roku", name = "Roku AI" }, { id = "scan", name = "Scans" } }) do
+        TABS[#TABS + 1] = t
+    end
     local function tabOf(lbl)
         if lbl:find("^Scan darkness") or lbl:find("^Reactor: blackout") or lbl:find("^Preview Nightmare")
             or lbl:find("^Dark:") or lbl:find("^Lamps ") then return "dark" end
@@ -1268,11 +1272,14 @@ SCREENS.lab = function()
     local ti = 1
     for i, t in ipairs(TABS) do if t.id == LAB.tab then ti = i end end
     local shown = { { label = "Section:  < " .. TABS[ti].name .. " >  " .. ti .. "/" .. #TABS,
-        desc = "Run: time and cheats.  Darkness: lights and look.  Roku: her brain, noise, spawns.  Scans: files for research.",
+        desc = "Run: time and cheats.  Player / Roku / Senses / Items / World: toys.  Darkness: lights.  Roku AI: her brain, noise, spawns.  Scans: research files.",
         cycle = function(dir)
             LAB.tab = TABS[(ti - 1 + dir) % #TABS + 1].id
             UI.sel = 1
         end } }
+    if TABS[ti].items then
+        for _, it in ipairs(TABS[ti].items()) do shown[#shown + 1] = it end
+    end
     for _, it in ipairs(items) do
         if tabOf(it.label) == LAB.tab then shown[#shown + 1] = it end
     end

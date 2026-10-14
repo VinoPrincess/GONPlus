@@ -83,6 +83,7 @@ Runs that use lab cheats never count for records.
 Code written with the help of AI (Claude by Anthropic).
 
 Thanks to **BlackBoneGames** and **Tom** for GON: God of Nothing, and to the **UE4SS** team for the modding framework.
+Thanks to **PerfectZero (mrdude2x)** — [RokuMenu](https://github.com/mrdude2x/Roku-Menu) showed how Roku's senses, chase reset and attack animations work (no code was copied).
 
 This mod contains no game files. Licensed under the [MIT License](LICENSE).
 

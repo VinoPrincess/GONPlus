@@ -12,6 +12,7 @@
     hud         спидран-панель, главный цикл, всплывающие надписи
     input       клавиши и мышь в окне
     lab         лаборатория F1 (открывается 7 кликами по "+GON+PLUS+")
+    labfun      вкладки лаборатории: игрок, Року, чувства, предметы, мир (бывший FunMenu)
     stealth     режим Pure Stealth
     endscreens  экраны поражения и победы
     darkness    настоящая темнота (лампы, небо, тени, виньетка) для Nightmare и реактора
@@ -26,7 +27,7 @@
   показываются как "имя.lua:строка".
 ]]
 
-local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "stealth",
+local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "labfun", "stealth",
                 "endscreens", "darkness", "graphics", "mutators", "nightmare", "lovesick", "finish" }
 
 local function say(m) print("[GON+] " .. tostring(m) .. "\n") end
