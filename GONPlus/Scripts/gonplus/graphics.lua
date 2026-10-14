@@ -78,6 +78,8 @@ local function gfxLog(msg) print(TAG .. "Graphics: " .. msg .. "\n") end   -- в
 
 -- что было у игры до нас (по имени переменной); пока что-то наше стоит
 local ORIG = {}
+-- сколько раз подряд движок не принял значение: после 3 бросаем (не дёргаем каждые 2 с)
+local FAILS = {}
 
 local function wanted()
     local want, order = {}, {}
@@ -109,9 +111,14 @@ function gfxApply(why)
     end
     for _, n in ipairs(order) do
         local cur = cvarGet(n)
-        if cur == nil or math.abs(cur - want[n]) > 0.01 then
+        local key = n .. "=" .. tostring(want[n])
+        if (cur == nil or math.abs(cur - want[n]) > 0.01) and (FAILS[key] or 0) < 3 then
             cvarSet(n, want[n])
-            changed[#changed + 1] = n .. "=" .. tostring(want[n])
+            -- что получилось на самом деле: если движок не принял — видно в логе
+            local got = cvarGet(n)
+            if got == nil or math.abs(got - want[n]) > 0.01 then FAILS[key] = (FAILS[key] or 0) + 1 else FAILS[key] = nil end
+            changed[#changed + 1] = n .. "=" .. tostring(want[n]) ..
+                ((got == nil or math.abs(got - want[n]) > 0.01) and (" (NOT APPLIED, now " .. tostring(got) .. ")") or "")
         end
     end
     -- то, что больше не выбрано, — вернуть как было у игры
