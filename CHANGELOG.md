@@ -15,7 +15,7 @@
 - **Developer lab (F1): five new sections**, the old FunMenu moved in and new findings added.
   - *Player:* ghost flight, endless mask, heal, super speed, moon gravity, size, teleport where you look, save / return to a spot.
   - *Roku:* freeze, pull to me, AI asleep, camera through her eyes / behind her, big / tiny / hyper / invisible, orbit,
-    any animation, fall over, turn to me, drunk, late-game speed, cowbell, an item in her hands.
+    any animation, fall over, turn to me, drunk, late-game speed, cowbell, a hit-reaction prop (research).
   - *Senses:* hearing radius and vision range (deaf … hears everything, near-sighted … eagle eyes), senses off,
     "forget me" (cancels the chase), "can't hurt you", karma (spotted = she trips), vision down / up.
   - *Items:* spawn any item, force push, clone fountain, delete what you look at / everything spawned, shake the Sum of Nothing.

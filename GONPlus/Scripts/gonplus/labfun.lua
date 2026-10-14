@@ -393,7 +393,9 @@ local ANIMS = {
     { "Attack: heart", A .. "anims/aggro/aggro_v2/ATK_HEART_Montage.ATK_HEART_Montage" },
     { "Attack: stomp", A .. "anims/aggro/aggro_v2/ATK_STOMP_Montage.ATK_STOMP_Montage" },
 }
--- предметы, которые у Року спрятаны в руках (для будущего "подарок принят" в Lovesick)
+-- реквизит Року для анимаций попадания: брошенное яблоко исчезает при касании, а у неё
+-- во рту/в руке появляется закреплённая копия, чтобы реакция MHIT_* выглядела правильно.
+-- Это не "предмет в руках" — просто показать реквизит (для исследований).
 local HOLD = { { "Apple", "AppleVis" }, { "Carrot", "carrotVIS" }, { "Glow stick", "GStickVis" } }
 
 ------------------------------------------------------------------------
@@ -597,11 +599,11 @@ LAB_EXTRA_TABS = {
         toggle("cowbell", "Cowbell", "The game's cowbell event (the bell on Roku).",
             function() return rokusDo(function(r) r:cb_event() end, "Ding!") end,
             function() return rokusDo(function(r) r:cb_off() end, "Bell off") end, nil, false),
-        action("Hold item", "< > choose: the nearest Roku shows it in her hands (for Lovesick gifts later).", function()
+        action("Show hit prop", "< > choose: shows the prop the game uses in hit reactions (a thrown apple ends up in her mouth). Research only.", function()
             local r = nearestRoku(); if not r then return "Roku not found" end
             local e = HOLD[FUN.v.holdIdx]
             r[e[2]](r)
-            return "Roku holds: " .. e[1]
+            return "Prop shown: " .. e[1]
         end, { "holdIdx", HOLD_N }, false),
     } end },
 
