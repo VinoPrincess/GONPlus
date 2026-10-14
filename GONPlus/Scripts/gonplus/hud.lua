@@ -293,7 +293,9 @@ end
 local function updateBars(dt)
     local b = UI.bars; if not b then return end
     local pawn = getPawn()
-    local show = P.ownBars and pawn ~= nil and R.phase ~= "none" and R.base ~= "nightmare"
+    -- пока открыто окно выбора — прячем (игра на паузе, а терминал-панель стоит там же, где полоски)
+    local menuOpen = UI.open and UI.kind ~= "lab"
+    local show = P.ownBars and pawn ~= nil and R.phase ~= "none" and R.base ~= "nightmare" and not menuOpen
     local term = show and P.barsStyle == "term"
     for _, k in ipairs({ "hp", "st" }) do
         for _, part in ipairs({ "frame", "trail", "fill" }) do

@@ -249,7 +249,8 @@ function fitRowFont(r, s, hasExtra, L)
     local wide = L.rowFont == "button" and 1.15 or 0.62   -- ширина буквы в долях размера
     local avail = L.rowW - 58
     local size = math.floor(avail / (math.max(1, #s) * wide))
-    size = math.min(size, hasExtra and (L.rowSize - 6) or L.rowSize)
+    -- терминал: один размер у всех строк (с подписью и без), иначе строки "прыгают"
+    size = math.min(size, (hasExtra or L.term) and (L.rowSize - 6) or L.rowSize)
     size = math.max(size, 12)
     if r.fontSize ~= size then
         r.fontSize = size
