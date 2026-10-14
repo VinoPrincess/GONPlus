@@ -1,4 +1,4 @@
-GON+  v1.0.1  -  modes, mutators and records for GON: God of Nothing
+GON+  v1.0.2  -  modes, mutators and records for GON: God of Nothing
 ==================================================================
 
 No cheats. You only choose how you want to play.
@@ -58,8 +58,15 @@ Every mode + mutator combination keeps its own best run. The speedrun panel
 
 SETTINGS
 --------
-Chaos timing, speedrun panel size and position, GON+ health and stamina bars
-(bottom center or in the corner like the game).
+Interface      game style (like the pause menu) or Terminal (a side panel
+               like a computer in the complex); menu animations on/off.
+Bars           GON+ health and stamina bars: corner (like the game), center,
+               or terminal (thin bars with numbers).
+Graphics/FPS   for PCs where the game drops frames: render scale, quality,
+               shadows, reflections, fog, anti-aliasing, effects, FPS limit,
+               presets and an FPS counter. "game" = the game's own value;
+               "Reset to game" puts everything back.
+Also           chaos timing, speedrun panel size and position.
 
 
 CREDITS

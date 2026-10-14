@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.2 — 2026-10-14
 
 - **Fixed Lovesick's last two minutes** ("SHE ALWAYS KNOWS"): Roku ran back and forth and ignored you.
   Every "love power" ping sent her to where you *were*; she looked around the empty spot, wandered off,
