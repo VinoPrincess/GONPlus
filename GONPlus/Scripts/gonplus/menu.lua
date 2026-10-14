@@ -213,12 +213,12 @@ local SETTING_ROWS = {
       desc = "Speedrun panel: distance from the top of the screen." },
     { key = "ownBars",       label = "GON+ bars", bool = true,
       desc = "GON+ health and stamina bars instead of the game's own (they change color with modes)." },
-    { key = "uiStyle",       label = "Interface", choices = { { "game", "game" }, { "term", "terminal" } },
-      desc = "Game: windows like the game's pause menu. Terminal: a side panel like a computer in the complex (bars switch to match)." },
+    { key = "uiStyle",       label = "Interface", choices = { { "game", "game" }, { "term", "terminal" }, { "min", "minimal" } },
+      desc = "Game: windows like the game's pause menu. Terminal: a side panel like a computer in the complex. Minimal: no window, big text like the game's main menu. Bars switch to match." },
     { key = "uiAnim",        label = "Animations", bool = true,
-      desc = "Game style: pages slide up and down inside the frame. Terminal: the panel slides off the screen and comes back with the new page." },
-    { key = "barsStyle",     label = "Bars", choices = { { "corner", "corner" }, { "center", "center" }, { "term", "terminal" } },
-      desc = "Corner: like the game. Center: wide bars at the bottom, stamina hides when full. Terminal: thin square bars with numbers." },
+      desc = "Game style: pages slide up and down inside the frame. Terminal: the panel slides off the screen and comes back. Minimal: text drifts away and the new page fades in." },
+    { key = "barsStyle",     label = "Bars", choices = { { "corner", "corner" }, { "center", "center" }, { "term", "terminal" }, { "line", "lines" } },
+      desc = "Corner: like the game. Center: wide bars at the bottom, stamina hides when full. Terminal: thin square bars with numbers. Lines: two thin lines at the bottom." },
     { key = "labUnlocked",   label = "Developer lab (F1)", bool = true, only = function() return P.labUnlocked end,
       desc = "Full control over the game for testing. Runs with lab cheats don't count for records. Off hides it (7 clicks on +GON+PLUS+ bring it back)." },
 }
@@ -252,7 +252,7 @@ function fitRowFont(r, s, hasExtra, L)
     local avail = L.rowW - 58
     local size = math.floor(avail / (math.max(1, #s) * wide))
     -- терминал: один размер у всех строк (с подписью и без), иначе строки "прыгают"
-    size = math.min(size, (hasExtra or L.term) and (L.rowSize - 6) or L.rowSize)
+    size = math.min(size, (hasExtra or L.term or L.uniform) and (L.rowSize - 6) or L.rowSize)
     size = math.max(size, 12)
     if r.fontSize ~= size then
         r.fontSize = size
@@ -342,10 +342,16 @@ local function apply(a, k)
         else setT(v.panel, off * (1 - easeOut(k)), 0) end
         return
     end
+    -- минимал: текст уплывает влево и гаснет, новый проявляется справа (вперёд) / слева (назад)
+    local mx, my = 0, 1
+    if v.L.minimal then mx, my = 1, 0 end
+    local dist = v.L.minimal and 50 or SLIDE
     if a.phase == "out" then
-        setT(v.cv, 0, -a.dir * SLIDE * easeIn(k)); setO(v.cv, 1 - k)
+        local d = -a.dir * dist * easeIn(k)
+        setT(v.cv, d * mx, d * my); setO(v.cv, 1 - k)
     elseif a.phase == "in" then
-        setT(v.cv, 0, a.dir * SLIDE * (1 - easeOut(k))); setO(v.cv, k)
+        local d = a.dir * dist * (1 - easeOut(k))
+        setT(v.cv, d * mx, d * my); setO(v.cv, k)
         if a.open then setO(v.panel, math.min(1, k * 1.6)) end
     elseif a.phase == "close" then
         setO(v.panel, 1 - k)
@@ -418,11 +424,18 @@ refreshUI = function()
     if UI.open then
         local title, sub, items, foot = SCREENS[UI.screen]()
         local game = UI.kind ~= "lab"
-        useView(game and (P.uiStyle == "term" and "term" or "game") or "lab")
+        useView(game and (P.uiStyle == "term" and "term" or (P.uiStyle == "min" and "min" or "game")) or "lab")
         if menuAnimGate() then goto content_done end
         local term = UI.view.L and UI.view.L.term
+        local minimal = UI.view.L and UI.view.L.minimal
         local T = (UI.view.L and UI.view.L.theme) or {}
-        if term then
+        -- затемнение под окном: у минимала сильнее (окна нет)
+        local dimC = T.dim or GAME.dim
+        if UI.dimC ~= dimC and valid(UI.dim) then UI.dimC = dimC; pcall(function() UI.dim:SetColorAndOpacity(dimC) end) end
+        if minimal then
+            -- "+NEW+RUN+" как "+GOD+OF+NOTHING+"
+            title = "+" .. tostring(title or ""):upper():gsub("^%+%s*", ""):gsub("%s*%+$", ""):gsub("%s+", "+") .. "+"
+        elseif term then
             title = tostring(title or ""):upper():gsub("^%+%s*", ""):gsub("%s*%+$", "")
         else
             title = gameTitle(title)
@@ -492,6 +505,7 @@ refreshUI = function()
                     -- в терминале: "> ПУНКТ" белым на синей подсветке
                     local shown
                     if term then shown = (on and "> " or "  ") .. main
+                    elseif minimal then shown = on and ("— " .. main) or main
                     else shown = on and ("+ " .. main .. " +") or main end
                     fitRowFont(r, shown, extra ~= "", UI.view.L)
                     setText(r.main, shown)
@@ -547,7 +561,8 @@ local function changeSetting(r, dir)
         -- стиль окна тянет за собой полоски (потом их можно поменять отдельно)
         if r.key == "uiStyle" then
             if P.uiStyle == "term" then P.barsStyle = "term"
-            elseif P.barsStyle == "term" then P.barsStyle = "center" end
+            elseif P.uiStyle == "min" then P.barsStyle = "line"
+            elseif P.barsStyle == "term" or P.barsStyle == "line" then P.barsStyle = "center" end
         end
     elseif r.bool then P[r.key] = not P[r.key]
     else

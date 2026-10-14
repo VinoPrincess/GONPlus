@@ -367,7 +367,7 @@ local function updateBars(dt)
     pcall(function() b.st.fill:SetBrushColor({ R = GAME.stBlue.R, G = GAME.stBlue.G, B = GAME.stBlue.B, A = sa }) end)
     -- по центру: полная выносливость через 1.5 с прячется, при беге появляется
     local op = 1
-    if P.barsStyle == "center" then
+    if P.barsStyle == "center" or P.barsStyle == "line" then
         if st >= 0.999 and not rec then
             b.stFullSince = b.stFullSince or t
             op = math.max(0, 1 - (t - b.stFullSince - 1.5) / 0.5)

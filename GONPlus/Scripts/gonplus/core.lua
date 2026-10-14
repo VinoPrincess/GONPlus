@@ -2,7 +2,7 @@
 -- Все файлы gonplus\*.lua склеиваются загрузчиком (main.lua) в один кусок по порядку,
 -- поэтому local из этого файла видны в следующих. Порядок файлов важен.
 
-local VERSION = "1.0.2"
+local VERSION = "1.1-dev"
 local AUTHOR = "VinoPrincess"
 -- лаборатория разработчика (F1): true — открывается 7 кликами по "+GON+PLUS+" в окне выбора;
 -- "always" — сразу; false — вырезана совсем
@@ -283,10 +283,10 @@ local function loadSettings()
     f:close()
 end
 loadSettings()
-if P.barsStyle ~= "corner" and P.barsStyle ~= "center" and P.barsStyle ~= "term" then
+if P.barsStyle ~= "corner" and P.barsStyle ~= "center" and P.barsStyle ~= "term" and P.barsStyle ~= "line" then
     P.barsStyle = P.barsCenter and "center" or "corner"
 end
-if P.uiStyle ~= "term" then P.uiStyle = "game" end
+if P.uiStyle ~= "term" and P.uiStyle ~= "min" then P.uiStyle = "game" end
 VERBOSE = VERBOSE or P.labUnlocked == true
 
 ------------------------------------------------------------------------

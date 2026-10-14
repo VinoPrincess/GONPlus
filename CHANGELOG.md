@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (1.1)
+
+- **New interface style: Minimal** (Settings → Interface: game / terminal / minimal). No window: big text in the
+  game's button font right over the darkened game, like the game's main menu; `+NEW+RUN+` headings, `— ROW`
+  selection, the description on the right behind a thin line. Animation: the text drifts away and the new page fades in.
+- **Bars: Lines** (Settings → Bars) — two thin lines at the bottom center; picked automatically with Minimal.
+- Fixed: switching the interface style while scrolled down could move the selection to another row.
+
 ## 1.0.2 — 2026-10-14
 
 - **Fixed Lovesick's last two minutes** ("SHE ALWAYS KNOWS"): Roku ran back and forth and ignored you.

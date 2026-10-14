@@ -170,6 +170,17 @@ local TERMMENU = {
     descSize = 16, descH = 120, footSize = 13,
     left = true, term = true, radius = 0, pillRadius = 3,
 }
+-- «Минимал» (Interface: minimal): без окна, как главное меню игры — крупный текст Conthrax
+-- прямо поверх затемнённой игры, слева список, справа описание за тонкой линией
+local MINMENU = {
+    w = 1340, h = 900, ax = 0, ay = 0.5, alx = 0, aly = 0.5, px = 70, py = 0,
+    rows = 9, rowX = 40, rowW = 660, rowY = 176, rowH = 56, rowStep = 62,
+    tag = "+GON+PLUS+", tagY = 40, titleY = 74, titleH = 50, titleSize = 30, subY = 124, subSize = 16,
+    rowFont = "button", rowSize = 30, extraSize = 13, plusSize = 0,
+    descSize = 18, descH = 320, footSize = 13,
+    descX = 790, descY = 200, descW = 480,
+    left = true, minimal = true, uniform = true, radius = 0, pillRadius = 0,
+}
 local GAME_ROWS = MENU.rows
 
 -- цвета окна: по умолчанию как меню паузы игры, у терминала свои
@@ -188,7 +199,16 @@ local THEME_TERM = {
     sub = { R = 1, G = 1, B = 1, A = 0.5 }, desc = { R = 1, G = 1, B = 1, A = 0.72 },
     foot = { R = 1, G = 1, B = 1, A = 0.4 }, more = TERM_BLUE, thumb = TERM_BLUE,
 }
-MENU.theme, LABMENU.theme, TERMMENU.theme = THEME_GAME, THEME_GAME, THEME_TERM
+local NONE = { R = 0, G = 0, B = 0, A = 0 }
+local THEME_MIN = {
+    frame = NONE, outline = NONE, outlineW = 0,
+    pillOff = NONE, pillOn = NONE, pillLine = NONE, pillLineW = 0,
+    idle = { R = 1, G = 1, B = 1, A = 0.5 }, sel = GAME.blue, tag = GAME.faint, title = { R = 1, G = 1, B = 1, A = 0.85 },
+    sub = { R = 1, G = 1, B = 1, A = 0.5 }, desc = { R = 1, G = 1, B = 1, A = 0.78 },
+    foot = { R = 1, G = 1, B = 1, A = 0.4 }, more = GAME.blue, thumb = { R = 1, G = 1, B = 1, A = 0.8 },
+    dim = { R = 0, G = 0, B = 0, A = 0.6 },   -- без окна текст читается только на сильнее затемнённой игре
+}
+MENU.theme, LABMENU.theme, TERMMENU.theme, MINMENU.theme = THEME_GAME, THEME_GAME, THEME_TERM, THEME_MIN
 
 local function buildGameMenu(tree, canvas, L)
     L = L or MENU
@@ -239,8 +259,13 @@ local function buildGameMenu(tree, canvas, L)
     -- подпись мода в духе "+GOD+OF+NOTHING+" под логотипом
     v.tag = text("main", 14, T.tag, L.tagY, 24)
     pcall(function() local f = v.tag.Font; f.LetterSpacing = L.term and 250 or 450; v.tag:SetFont(f) end)
+    if L.minimal then
+        -- заголовок разрядкой, как "+GOD+OF+NOTHING+" под логотипом игры
+        pcall(function() local f = v.tag.Font; f.LetterSpacing = 600; v.tag:SetFont(f) end)
+    end
     setText(v.tag, L.tag)
     v.title = text("main", L.titleSize, T.title, L.titleY, L.titleH)
+    if L.minimal then pcall(function() local f = v.title.Font; f.LetterSpacing = 350; v.title:SetFont(f) end) end
     v.sub = text("main", L.subSize, T.sub, L.subY, 30)
     -- "+" в углу окна, как у меню паузы
     if (L.plusSize or 0) > 0 then
@@ -301,11 +326,12 @@ local function buildGameMenu(tree, canvas, L)
     v.moreUp:SetVisibility(VIS_HIDE); v.moreDown:SetVisibility(VIS_HIDE)
 
     -- полоса прокрутки справа от списка: дорожка + бегунок (клик по дорожке — туда, можно тянуть)
-    local sb = { x = L.rowX + L.rowW + (big and 18 or 10), y = L.rowY, w = big and 10 or 8,
+    local sb = { x = L.rowX + L.rowW + (big and 18 or 10), y = L.rowY, w = L.minimal and 3 or (big and 10 or 8),
                  h = listEnd - L.rowY }
-    local sbR = L.term and 1 or sb.w / 2
+    local sbR = (L.term or L.minimal) and 1 or sb.w / 2
     sb.track = construct("/Script/UMG.Border", tree)
-    roundBrush(sb.track, { R = 0, G = 0, B = 0, A = 0.35 }, L.term and T.outline or GAME.outline, 1, sbR)
+    roundBrush(sb.track, L.minimal and { R = 1, G = 1, B = 1, A = 0.15 } or { R = 0, G = 0, B = 0, A = 0.35 },
+        L.minimal and NONE or (L.term and T.outline or GAME.outline), L.minimal and 0 or 1, sbR)
     place(sb.track, sb.x, sb.y, sb.w, sb.h)
     sb.thumb = construct("/Script/UMG.Border", tree)
     roundBrush(sb.thumb, T.thumb, { R = 0, G = 0, B = 0, A = 0 }, 0, sbR)
@@ -317,7 +343,8 @@ local function buildGameMenu(tree, canvas, L)
     local bk = { x = L.term and L.rowX or 36, w = big and 170 or 130, h = big and 44 or 36 }
     bk.y = L.h - bk.h - 22
     bk.pill = construct("/Script/UMG.Border", tree)
-    roundBrush(bk.pill, T.pillOff, L.term and T.outline or GAME.outline, L.term and 1 or 2, L.term and 3 or bk.h / 2)
+    roundBrush(bk.pill, T.pillOff, L.minimal and NONE or (L.term and T.outline or GAME.outline),
+        L.minimal and 0 or (L.term and 1 or 2), (L.term or L.minimal) and 3 or bk.h / 2)
     pcall(function() bk.pill:SetHorizontalAlignment(2); bk.pill:SetVerticalAlignment(2) end)
     bk.text = construct("/Script/UMG.TextBlock", tree)
     setFont(bk.text, L.rowFont, big and 20 or 15); center(bk.text); setColor(bk.text, T.idle)
@@ -326,8 +353,14 @@ local function buildGameMenu(tree, canvas, L)
     place(bk.pill, bk.x, bk.y, bk.w, bk.h)
     bk.pill:SetVisibility(VIS_HIDE)
     v.back = bk
-    local descY = listEnd + 26
-    v.desc = text("main", L.descSize, T.desc, descY, L.descH, L.left and L.rowX or 40, L.left and L.rowW or (L.w - 80))
+    local descY = L.descY or (listEnd + 26)
+    v.desc = text("main", L.descSize, T.desc, descY, L.descH, L.descX or (L.left and L.rowX or 40), L.descW or (L.left and L.rowW or (L.w - 80)))
+    if L.descX then
+        -- тонкая линия слева от описания
+        local ln = construct("/Script/UMG.Border", tree)
+        pcall(function() ln:SetBrushColor({ R = 1, G = 1, B = 1, A = 0.3 }) end)
+        place(ln, L.descX - 22, descY - 6, 1, L.descH)
+    end
     pcall(function() v.desc:SetAutoWrapText(true) end)
     -- подсказка внизу — правее кнопки "назад"
     local footX = bk.x + bk.w + 24
@@ -356,6 +389,8 @@ local BARS_LAYOUT = {
     center = { ax = 0.5, hp = { w = 440, h = 14, y = -78, inset = 3 }, st = { w = 300, h = 8, y = -56, inset = 2 } },
     corner = { ax = 0,   x = 48, st = { w = 300, h = 20, y = -98, inset = 4 }, hp = { w = 300, h = 20, y = -64, inset = 4 } },
     -- терминал: слева внизу тонкие квадратные полоски, слева "HP"/"ST", справа проценты
+    -- минимал: две тонкие линии по центру внизу, без рамок
+    line   = { ax = 0.5, line = true, hp = { w = 380, h = 4, y = -50, inset = 0 }, st = { w = 380, h = 3, y = -40, inset = 0 } },
     term   = { ax = 0,   x = 92, term = true, hp = { w = 260, h = 12, y = -78, inset = 2 }, st = { w = 260, h = 12, y = -54, inset = 2 } },
 }
 function barsGeom()
@@ -443,10 +478,15 @@ function layoutBars()
             local w = e[part]
             if valid(w) then
                 local fill = nil
+                local flat = term or L.line
                 if part == "frame" then
-                    roundBrush(w, { R = 0, G = 0, B = 0, A = term and 0.5 or 0.35 }, term and { R = 0, G = 0.5, B = 1, A = 0.8 } or GAME.outline,
-                        term and 1 or (P.barsStyle == "center" and 1.5 or 2), term and 0 or g.h / 2)
-                else roundBrush(w, part == "trail" and { R = 1, G = 1, B = 1, A = 0.55 } or (k == "hp" and GAME.hpGreen or GAME.stBlue), { R = 0, G = 0, B = 0, A = 0 }, 0, term and 0 or (g.h - g.inset * 2) / 2) end
+                    if L.line then
+                        roundBrush(w, { R = 1, G = 1, B = 1, A = 0.15 }, { R = 0, G = 0, B = 0, A = 0 }, 0, 0)
+                    else
+                        roundBrush(w, { R = 0, G = 0, B = 0, A = term and 0.5 or 0.35 }, term and { R = 0, G = 0.5, B = 1, A = 0.8 } or GAME.outline,
+                            term and 1 or (P.barsStyle == "center" and 1.5 or 2), term and 0 or g.h / 2)
+                    end
+                else roundBrush(w, part == "trail" and { R = 1, G = 1, B = 1, A = 0.55 } or (k == "hp" and GAME.hpGreen or GAME.stBlue), { R = 0, G = 0, B = 0, A = 0 }, 0, flat and 0 or (g.h - g.inset * 2) / 2) end
             end
         end
     end
@@ -469,6 +509,12 @@ local function useView(kind)
     if not v then return false end
     for k, other in pairs(UI.views) do
         if k ~= kind and valid(other.panel) then other.panel:SetVisibility(VIS_HIDE) end
+    end
+    if UI.view ~= v then
+        -- сменился стиль окна: новый список прокручиваем туда же, а выбранный пункт держим на виду
+        -- (иначе опрос колёсика увидит другую прокрутку и уведёт выбор)
+        if v.sbox then pcall(function() v.sbox:SetScrollOffset(UI.scrollPx or 0) end) end
+        UI.ensureSel = true
     end
     UI.view = v
     UI.panel, UI.panelSlot = v.panel, v.slot
@@ -506,6 +552,7 @@ local function buildUI()
     UI.views.game = buildGameMenu(tree, canvas)
     -- то же окно в стиле «терминал» (Settings -> Interface)
     UI.views.term = buildGameMenu(tree, canvas, TERMMENU)
+    UI.views.min = buildGameMenu(tree, canvas, MINMENU)
 
     -- окно данных лаборатории (слева сверху)
     local lab, lvb = box(tree, canvas, 0, 0, 0, 0, 30, 30, COL.gold, COL.hudBg)
