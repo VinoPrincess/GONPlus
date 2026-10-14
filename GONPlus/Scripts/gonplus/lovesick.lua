@@ -121,6 +121,7 @@ local function state(r)
         -- в первые секунды после появления она уже знает, где ты
         LV.nextPing = math.min(LV.nextPing, (gameNow() or 0) + rnd(2, 8))
     end
+    st.r = r          -- ссылка только на этот тик: r свежая из allRokus()
     return st
 end
 
@@ -364,17 +365,18 @@ loveStop = function()
     if not LV.on then return end
     LV.finalLeft = loveLeft()
     LV.on = false
-    for _, st in pairs(LV.rokus or {}) do
-        if valid(st.r) then
-            local o = LAB.orig[st.r:GetAddress()]
+    -- только живые Року (свежий поиск), а не сохранённые ссылки
+    for _, r in ipairs(allRokus()) do
+        if LV.rokus and LV.rokus[r:GetAddress()] then
+            local o = LAB.orig[r:GetAddress()]
             if o then
-                pcall(function() st.r.CharacterMovement.MaxWalkSpeed = o.move end)
-                setIf(st.r, "MoveSpeed", o.move); setIf(st.r, "chasespeed", o.chase)
+                pcall(function() r.CharacterMovement.MaxWalkSpeed = o.move end)
+                setIf(r, "MoveSpeed", o.move); setIf(r, "chasespeed", o.chase)
             end
-            pcall(function() st.r.bIsChasing = false end)
-            pcall(function() st.r.AttackBox:SetCollisionEnabled(1) end)
-            pcall(function() st.r:DrunkClear() end)
-            brainOn(st.r)
+            pcall(function() r.bIsChasing = false end)
+            pcall(function() r.AttackBox:SetCollisionEnabled(1) end)
+            pcall(function() r:DrunkClear() end)
+            brainOn(r)
         end
     end
     LV.rokus = {}

@@ -36,9 +36,7 @@ onForgetRefs(function()
     LAB.tracked, LAB.trk, LAB.flying, LAB.watchThrowUntil = {}, {}, {}, nil
     LAB.points, LAB.targets, LAB.heard, LAB.lastOrder = nil, {}, {}, {}
     LAB.orig, LAB.detKey = {}, {}
-    local keep = {}
-    for _, a in ipairs(LAB.extras or {}) do if valid(a) then keep[#keep + 1] = a end end
-    LAB.extras = keep
+    LAB.extras = {}
 end)
 
 local describe -- задаётся ниже, в разделе скана
@@ -49,6 +47,16 @@ local function allRokus()
         if valid(r) then out[#out + 1] = r end
     end
     return out
+end
+
+-- Живая Року по адресу (или nil). Саму Року между тиками НЕ храним — только адрес:
+-- если игра её удалила, обращение к старой ссылке роняет игру мимо pcall.
+local function rokuAt(addr)
+    if not addr then return nil end
+    for _, r in ipairs(allRokus()) do
+        if r:GetAddress() == addr then return r end
+    end
+    return nil
 end
 
 local function vlen(x, y, z) return math.sqrt(x * x + y * y + z * z) end
@@ -599,11 +607,13 @@ local function spawnExtra()
     local a = pawn:GetWorld():SpawnActor(cls, { X = loc.X, Y = loc.Y, Z = loc.Z + 120 }, { Pitch = 0, Yaw = math.random(0, 359), Roll = 0 })
     if not valid(a) then log("Lab spawn: SpawnActor failed") return "Spawn failed" end
     log("Lab spawn: step 2 actor alive: " .. describe(a))
-    LAB.extras[#LAB.extras + 1] = a
-    LAB.born[a:GetAddress()] = os.clock()
+    local addr = a:GetAddress()
+    LAB.extras[#LAB.extras + 1] = addr        -- только адрес
+    LAB.born[addr] = os.clock()
     -- контроллер — только если игра не дала свой, и не сразу
     after(1500, function()
-        if not valid(a) then log("Lab spawn: actor gone before controller check") return end
+        a = rokuAt(addr)
+        if not a then log("Lab spawn: actor gone before controller check") return end
         local has = false
         has = aiCtrl(a) ~= nil
         log("Lab spawn: step 3 controller from game: " .. tostring(has))
@@ -618,10 +628,11 @@ end
 
 local function removeExtras()
     local n = 0
-    for _, a in ipairs(LAB.extras) do
-        if valid(a) then
+    for _, addr in ipairs(LAB.extras) do
+        local a = rokuAt(addr)
+        if a then
             ctrlCall(a, function(c) c:K2_DestroyActor() end)
-            a:K2_DestroyActor(); n = n + 1
+            pcall(function() a:K2_DestroyActor() end); n = n + 1
         end
     end
     LAB.extras = {}

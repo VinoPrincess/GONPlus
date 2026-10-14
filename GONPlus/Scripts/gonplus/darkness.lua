@@ -12,6 +12,7 @@
 -- Каждый способ включается отдельно: darkSet(name, true/false, arg).
 -- Всё возвращается само при смене персонажа (смерть, рестарт).
 ------------------------------------------------------------------------
+; (function() -- свой кусок: внутренние local не съедают лимит 200 главного куска
 DARK = { active = {}, pawn = nil }
 
 local function inLevel(c)
@@ -383,3 +384,4 @@ function darkScan()
     log("Dark scan written: " .. path)
     return "Saved dark_scan.txt"
 end
+end)() -- DARKNESS

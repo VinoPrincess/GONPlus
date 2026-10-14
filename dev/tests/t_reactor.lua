@@ -1,0 +1,18 @@
+-- Reactor Meltdown: таймер, отключения света, жара, Року на взводе
+TESTS = arg[0]:match("^(.*)[/\\]") or "."
+dofile(TESTS .. "/mock.lua")
+LOAD(arg[1])
+run(600)
+goto_("MUTATOR: NONE"); key("RETURN")
+goto_("REACTOR: FAILURE"); key("RIGHT_ARROW"); key("RIGHT_ARROW"); key("RETURN")
+startRun()
+check(logHas("Mutator ON: meltdown"), "meltdown on")
+PAWN["Sprint Meter"] = 1.0; run(250); PAWN["Sprint Meter"] = 2.0; run(260)
+check(PAWN["Sprint Meter"] < 1.9, "heat slows stamina recovery")
+GAME_T = GAME_T + 100; run(4000); GAME_T = GAME_T + 30; run(3000); GAME_T = GAME_T + 20; run(3000)
+check(logHas("blackout for"), "blackout happens")
+check(logHas("power back"), "power comes back")
+ROKU_PRESENT = true; run(4000)
+GAME_T = GAME_T + 17 * 60 - 200; run(6000)
+check((ROKU.MoveSpeed or 0) > 150, "Roku on edge in the last minutes")
+DONE("reactor")

@@ -152,17 +152,18 @@ local function edgeRokus(s, mult)
         local addr = r:GetAddress()
         if not s.edged[addr] then
             local o = origSpeeds(r)
-            s.edged[addr] = { r = r, o = o }
+            s.edged[addr] = { o = o }
             pcall(function() r.MoveSpeed = o.move * mult end)
             pcall(function() r.chasespeed = o.chase * mult end)
         end
     end
 end
 local function calmRokus(s)
-    for _, e in pairs(s.edged or {}) do
-        if valid(e.r) then
-            pcall(function() e.r.MoveSpeed = e.o.move end)
-            pcall(function() e.r.chasespeed = e.o.chase end)
+    for _, r in ipairs(allRokus()) do                     -- только живые Року
+        local e = s.edged and s.edged[r:GetAddress()]
+        if e then
+            pcall(function() r.MoveSpeed = e.o.move end)
+            pcall(function() r.chasespeed = e.o.chase end)
         end
     end
     s.edged = nil
@@ -467,7 +468,7 @@ mutator {
     id = "twins", name = "Twins", tags = { "rokus", "wander" }, chaos = false, noStealth = true,
     desc = "A second Roku roams the map. She doesn't hunt you on purpose - but if she sees you, she attacks just like the first.",
     on = function(s)
-        s.mode, s.twin, s.lost = "wait", nil, 0
+        s.mode, s.addr, s.lost = "wait", nil, 0
         s.saved = { LAB.noiseThrow, LAB.noiseSprint, LAB.noiseVent, LAB.noiseDoor }
         -- шумы нашей бродилки не нужны: родная Року слышит сама
         LAB.noiseThrow, LAB.noiseSprint, LAB.noiseVent, LAB.noiseDoor = false, false, false, false
@@ -477,19 +478,22 @@ mutator {
             -- ждём родную Року (она появляется по триггеру после лифта)
             if #allRokus() == 0 then return end
             local original = allRokus()[1]
-            s.twin = spawnFarRoku()
-            if not s.twin then s.mode = "failed" return end
-            local twin = s.twin
-            after(2000, function() if valid(twin) then dressTwin(twin, original) end end)
-            s.addr = s.twin:GetAddress()
+            local twin = spawnFarRoku()
+            if not twin then s.mode = "failed" return end
+            s.addr = twin:GetAddress()          -- храним только адрес; саму Року ищем заново
+            local oaddr = original:GetAddress()
+            after(2000, function()
+                local t2, o2 = rokuAt(s.addr), rokuAt(oaddr)
+                if t2 and o2 then dressTwin(t2, o2) end
+            end)
             LAB.wanderOnly = { [s.addr] = true }
             LAB.targets = {}
             LAB.wander = true
             s.mode = "wander"
             return
         end
-        local t = s.twin
-        if not valid(t) then return end
+        local t = rokuAt(s.addr)
+        if not t then return end
         if s.mode == "wander" then
             if rokuSees(t) then
                 -- увидела: включаем ей родной мозг, бегом как обычно
@@ -516,10 +520,12 @@ mutator {
         LAB.wander = false
         LAB.wanderOnly = nil
         LAB.targets = {}
-        if valid(s.twin) then
-            ctrlCall(s.twin, function(c) c:K2_DestroyActor() end)
-            pcall(function() s.twin:K2_DestroyActor() end)
+        local t = rokuAt(s.addr)
+        if t then
+            ctrlCall(t, function(c) c:K2_DestroyActor() end)
+            pcall(function() t:K2_DestroyActor() end)
         end
+        s.addr = nil
         if s.saved then
             LAB.noiseThrow, LAB.noiseSprint, LAB.noiseVent, LAB.noiseDoor = s.saved[1], s.saved[2], s.saved[3], s.saved[4]
         end

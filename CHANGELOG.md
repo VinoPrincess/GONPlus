@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Stability: the mod no longer keeps references to Rokus or hiding spots between ticks — it stores their
+  addresses and looks the live object up again (Lovesick, Nightmare, Pure Stealth extras, Twins, Meltdown, lab).
+- Code: the darkness module has its own scope (headroom under Lua's 200-locals limit).
+- Developer tests on UE4SS mocks: `dev/tests` (see `dev/README.md`).
+
 ## 1.0.1 — 2026-10-13
 
 - **Fixed a crash in Pure Stealth with several Rokus** (reported by the first tester: 4 Rokus, a few steps after the elevator).

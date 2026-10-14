@@ -138,16 +138,19 @@ local function investigate(loc, radius, label)
     local o = origSpeeds(best)
     pcall(function() best.CharacterMovement.MaxWalkSpeed = o.chase * 0.75 end)
     sendTo(best, loc)
-    NM.inv[addr] = { r = best, dest = { X = loc.X, Y = loc.Y, Z = loc.Z }, t = g }
+    NM.inv[addr] = { dest = { X = loc.X, Y = loc.Y, Z = loc.Z }, t = g }
     log(string.format("Nightmare: Roku heard %s (%.0f cm away), going to check", label, bd))
     return true
 end
 
 local function invTick()
     local g = gameNow() or 0
+    local live = {}
+    for _, r in ipairs(allRokus()) do live[r:GetAddress()] = r end
+    local done = {}
     for addr, e in pairs(NM.inv) do
-        local r = e.r
-        if not valid(r) then NM.inv[addr] = nil
+        local r = live[addr]                       -- только живая Року (по адресу), не старая ссылка
+        if not r then done[#done + 1] = addr
         elseif not e.looking then
             local l = r:K2_GetActorLocation()
             local arrived = vlen(l.X - e.dest.X, l.Y - e.dest.Y, 0) < 200
@@ -158,9 +161,10 @@ local function invTick()
             end
         elseif g >= e.until_ then
             brainOn(r)
-            NM.inv[addr] = nil
+            done[#done + 1] = addr
         end
     end
+    for _, a in ipairs(done) do NM.inv[a] = nil end     -- не меняем таблицу во время pairs
 end
 
 function rokuSeesNM(r)
@@ -258,16 +262,18 @@ nightmareStop = function()
     if not NM.on then return end
     NM.on = false
     NOISE_HOOK = nil
-    for _, e in pairs(NM.inv or {}) do if valid(e.r) then brainOn(e.r) end end
+    -- только живые Року (свежий поиск по адресу)
+    for _, r in ipairs(allRokus()) do
+        local addr = r:GetAddress()
+        if NM.inv and NM.inv[addr] then brainOn(r) end
+        local e = NM.skins and NM.skins[addr]
+        if e and e.skin and e.skin ~= "None" then pcall(function() r:ApplyOutfit(FName(e.skin)) end) end
+    end
     NM.inv = {}
     setHiders(false)
     lightsOn()
     darkPreset(false, "nightmare")
-    -- вернуть Року её наряд
-    for _, e in pairs(NM.skins or {}) do
-        if valid(e.r) and e.skin and e.skin ~= "None" then pcall(function() e.r:ApplyOutfit(FName(e.skin)) end) end
-    end
-    NM.skins, NM.dressed = {}, {}
+    NM.skins, NM.dressed = {}, {}           -- наряды вернули выше, в том же проходе по живым Року
     if NM.saved then
         LAB.noiseSprint, LAB.noiseDoor, LAB.noiseVent, LAB.sprintRadius, LAB.doorRadius, LAB.ventRadius = table.unpack(NM.saved)
         NM.saved = nil
@@ -290,7 +296,7 @@ every(100, function()
             NM.dressed[addr] = true
             local was = nil
             pcall(function() was = r.CurrentSkin:ToString() end)
-            NM.skins[addr] = { r = r, skin = was }
+            NM.skins[addr] = { skin = was }
             local ok = pcall(function() r:ApplyOutfit(FName("Dark")) end)
             log("Nightmare: Roku outfit " .. tostring(was) .. " -> Dark (" .. tostring(ok) .. ")")
         end

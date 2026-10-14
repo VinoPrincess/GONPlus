@@ -28,14 +28,18 @@ local function setHiders(off)
             if valid(h) then
                 local addr = h:GetAddress()
                 pcall(function()
-                    if ST.hiders[addr] == nil then ST.hiders[addr] = { obj = h, was = h.bIsActive } end
+                    if ST.hiders[addr] == nil then ST.hiders[addr] = { was = h.bIsActive } end
                     if h.bIsActive ~= false then h.bIsActive = false end
                 end)
             end
         end
     else
-        for _, e in pairs(ST.hiders) do
-            if valid(e.obj) and e.was ~= nil then pcall(function() e.obj.bIsActive = e.was end) end
+        -- возвращаем только живым укрытиям (свежий поиск), по адресу
+        for _, h in ipairs(FindAllOf("BP_Hider_C") or {}) do
+            if valid(h) then
+                local e = ST.hiders[h:GetAddress()]
+                if e and e.was ~= nil then pcall(function() h.bIsActive = e.was end) end
+            end
         end
         ST.hiders = {}
     end
@@ -87,11 +91,13 @@ local function spawnStealthRoku()
         a = pawn:GetWorld():SpawnActor(cls, { X = loc.X, Y = loc.Y, Z = loc.Z + 120 }, { Pitch = 0, Yaw = math.random(0, 359), Roll = 0 })
     end)
     if not valid(a) then log("Stealth: SpawnActor failed") return false end
-    ST.extras[#ST.extras + 1] = a
-    LAB.born[a:GetAddress()] = os.clock()
+    local addr = a:GetAddress()
+    ST.extras[#ST.extras + 1] = addr          -- только адрес, саму Року ищем заново (rokuAt)
+    LAB.born[addr] = os.clock()
     log(string.format("Stealth: extra Roku spawned at (%.0f, %.0f)", loc.X, loc.Y))
     after(1500, function()
-        if not valid(a) then return end
+        a = rokuAt(addr)
+        if not a then return end
         local has = false
         has = aiCtrl(a) ~= nil
         if not has then pcall(function() a:SpawnDefaultController() end) end
@@ -146,8 +152,9 @@ stealthStop = function(result)
     setWander(false)
     -- после поимки лишние Року стоят до перезапуска: сцена не ломается
     if not ST.caught then
-        for _, a in ipairs(ST.extras) do
-            if valid(a) then
+        for _, addr in ipairs(ST.extras) do
+            local a = rokuAt(addr)
+            if a then
                 ctrlCall(a, function(c) c:K2_DestroyActor() end)
                 pcall(function() a:K2_DestroyActor() end)
             end
@@ -202,7 +209,7 @@ end
 local function isOurExtra(r)
     local addr = r:GetAddress()
     for _, a in ipairs(ST.extras) do
-        if valid(a) and a:GetAddress() == addr then return true end
+        if a == addr then return true end
     end
     return false
 end

@@ -1,0 +1,18 @@
+-- Pure Stealth на 2 Року: доп. Року появляется после родной, увидела = поражение
+TESTS = arg[0]:match("^(.*)[/\\]") or "."
+dofile(TESTS .. "/mock.lua")
+LOAD(arg[1])
+run(600)
+setMode("PURE STEALTH")
+goto_("ROKUS: 1"); key("RIGHT_ARROW")
+check(hasText("ROKUS: 2"), "2 Rokus selected")
+startRun()
+check(logHas("Stealth: started with 2 Roku"), "stealth started")
+ROKU_PRESENT = true; run(8000)
+check(logHas("game's Roku is here"), "waits for the game's own Roku")
+check(logHas("extra Roku spawned"), "extra Roku spawned")
+check(logHas("Lab: Roku #1 %-> "), "our brain sends her around")
+SEES(true); run(1500)
+check(logHas("CAUGHT"), "seen = caught")
+SEES(false)
+DONE("stealth")
