@@ -17,6 +17,7 @@
     endscreens  экраны поражения и победы
     darkness    настоящая темнота (лампы, небо, тени, виньетка) для Nightmare и реактора
     graphics    Settings -> Graphics: разрешение рендера, тени, отражения, лимит и счётчик FPS
+    gameui      Settings -> Game pop-ups: прятать всплывающие подсказки самой игры
     mutators    мутаторы игрока
     nightmare   режим Nightmare
     lovesick    режим Lovesick
@@ -29,7 +30,7 @@
 ]]
 
 local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "labfun", "stealth",
-                "endscreens", "darkness", "graphics", "mutators", "nightmare", "lovesick", "shy", "finish" }
+                "endscreens", "darkness", "graphics", "gameui", "mutators", "nightmare", "lovesick", "shy", "finish" }
 
 local function say(m) print("[GON+] " .. tostring(m) .. "\n") end
 

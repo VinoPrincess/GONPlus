@@ -2,6 +2,9 @@
 
 ## Unreleased (1.1)
 
+- **Settings → Game pop-ups** (on / off): hides the game's own on-screen hints (RUN, LOOK AT ME, SHE KNOWS…),
+  which clash with the modes. Item names and the note hint follow once we know their widgets
+  (with the lab unlocked the mod logs every game text as `Game text: …`).
 - **New mode: Bashful.** Idea by VinoPrincess, in the spirit of SCP-096: Roku can't see you, but she feels your gaze.
   She doesn't walk — she flickers out and appears again near you: ahead, behind, around the corner.
   Two ways to lose: look at her too long (she's on screen and nothing hides her), or come too close
