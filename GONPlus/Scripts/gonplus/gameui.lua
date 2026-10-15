@@ -197,8 +197,12 @@ every(2000, function()
         menuLines[#menuLines + 1] = "== GameInstance " .. gi .. ": " .. (valid(g) and g:GetFullName() or "not found")
         if valid(g) then dumpFuncs(g, menuLines, true) end
     end
+    local sgSeen = {}
     for _, sg in ipairs(FindAllOf("SaveGame") or {}) do
-        if valid(sg) then
+        local cn = ""
+        pcall(function() cn = sg:GetClass():GetFullName() end)
+        if valid(sg) and not sgSeen[cn] then
+            sgSeen[cn] = true
             menuLines[#menuLines + 1] = "== SaveGame: " .. sg:GetFullName()
             dumpFuncs(sg, menuLines, true)
         end
@@ -284,6 +288,30 @@ local function hookDifficulty()
 end
 every(2000, function()
     if P.labUnlocked and getPawn() then hookDifficulty() end
+end)
+
+-- имена слотов сохранений игры (SG_progress / SG_settings): нужны, чтобы наше меню
+-- само сохраняло скин и сложность так же, как экран Customize
+local slotHooked, slotSeen = false, {}
+local function slotLogger(kind)
+    return function(ctx, a, b)
+        pcall(function()
+            local slot = (kind == "save") and b or a
+            local name = slot:get():ToString()
+            if not slotSeen[kind .. name] then
+                slotSeen[kind .. name] = true
+                log("Save slots: game " .. kind .. "s slot \"" .. name .. "\"")
+            end
+        end)
+    end
+end
+every(2000, function()
+    if slotHooked or not P.labUnlocked then return end
+    slotHooked = true
+    for kind, fn in pairs({ save = "SaveGameToSlot", load = "LoadGameFromSlot", exists = "DoesSaveGameExist" }) do
+        local ok = pcall(function() RegisterHook("/Script/Engine.GameplayStatics:" .. fn, slotLogger(kind)) end)
+        log("Save slots: hook " .. fn .. " " .. (ok and "ready" or "failed"))
+    end
 end)
 
 scanDifficulty = function()
