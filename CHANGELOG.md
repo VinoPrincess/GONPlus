@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (1.1)
+## Unreleased (2.0)
 
 - **Modes and mutators reorganised.** A mode changes the rules as a whole; a mutator changes one thing.
   - **Reactor** is now a mode (Mode: Reactor, then pick the level: Failure / Critical failure / Meltdown).
