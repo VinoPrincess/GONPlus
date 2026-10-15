@@ -67,8 +67,10 @@ One per run (or let fate decide).
 ## Also
 
 - **Speedrun panel** — time, apples and the split against your best run.
-- **GON+ health and stamina bars** — at the bottom center, in the corner like the game, or terminal-style with numbers; they change color with the mode.
-- **Two interface styles** — like the game's pause menu, or **Terminal**: a side panel like a computer in the complex.
+- **The game's own settings in the GON+ window** — Roku's outfit, difficulty (plain game), mouse sensitivity, and an optional **Quick start** that skips the game's main menu.
+- **GON+ health and stamina bars** — at the bottom center, in the corner like the game, terminal-style with numbers, or two thin lines; they change color with the mode.
+- **Three interface styles** — like the game's pause menu, **Terminal** (a side panel like a computer in the complex) or **Minimal** (big text, no window, like the game's main menu). With menu animations.
+- **Run intros** — every mode and mutator starts with its name and a short line about what you're in for.
 - **Victory and defeat screens** for every mode and mutator.
 - **Game pop-ups** (in Settings) — hide the game's own pop-ups (+RUN+, item names, "note acquired") so they don't clash with the modes.
 - **Graphics / FPS** (in Settings) — render scale, shadows, reflections, fog, anti-aliasing, FPS limit,

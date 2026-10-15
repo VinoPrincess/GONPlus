@@ -1,4 +1,4 @@
-GON+  v1.0.2  -  modes, mutators and records for GON: God of Nothing
+GON+  v2.0  -  modes, mutators and records for GON: God of Nothing
 ==================================================================
 
 No cheats. You only choose how you want to play.
@@ -69,10 +69,16 @@ Every mode + mutator combination keeps its own best run. The speedrun panel
 
 SETTINGS
 --------
-Interface      game style (like the pause menu) or Terminal (a side panel
-               like a computer in the complex); menu animations on/off.
+Interface      game style (like the pause menu), Terminal (a side panel
+               like a computer in the complex) or Minimal (big text, no
+               window); menu animations on/off.
 Bars           GON+ health and stamina bars: corner (like the game), center,
-               or terminal (thin bars with numbers).
+               terminal (thin bars with numbers) or lines.
+Roku / Difficulty   on the main screen: Roku's outfit (saved for the game
+               too) and, for Normal without a mutator, the difficulty:
+               Easy / Normal / Hard / Nightmare. Other modes play on Normal.
+Mouse sensitivity   the game's own setting.
+Quick start    off by default; on = launching the game skips its main menu.
 Graphics/FPS   for PCs where the game drops frames: render scale, quality,
                shadows, reflections, fog, anti-aliasing, effects, FPS limit,
                presets and an FPS counter. "game" = the game's own value;

@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased (2.0)
+## 2.0 — 2026-10-15
+
+The big one. New modes, a new difficulty, six new mutators, the game's own settings in the GON+ window and two new interface styles.
+Your settings and records carry over: old choices (Nightmare, Reactor, SUTEGOMA) move to their new places by themselves.
 
 - **Modes and mutators reorganised.** A mode changes the rules as a whole; a mutator changes one thing.
   - **Reactor** is now a mode (Mode: Reactor, then pick the level: Failure / Critical failure / Meltdown).
