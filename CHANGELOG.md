@@ -12,6 +12,7 @@
   embarrassed she is; it fills while you stare or stand close and slowly fades. She never attacks.
   She's invisible until you look right at her or come close (surprise behind the door), fidgets shyly when you
   look at her, and every 35–60 s "LOOK AT ME" pulls your camera towards her — turn away in time.
+  While you look at her the mouse goes sluggish (the game's own sensitivity drops to 35%), so turning away takes effort.
   Not with Twins, Zoomies or Razor Claws.
 - Zero Hour: its own victory screen ("JUST IN TIME") instead of the reactor's.
 - **New mutator: Zero Hour.** One minute on the clock; every apple adds 20 seconds, but you can bank 2:30 at most —

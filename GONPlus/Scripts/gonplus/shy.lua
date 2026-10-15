@@ -31,6 +31,8 @@ local CFG = {
     lureEvery = { 35, 60 },       -- секунд между событиями
     lureTurn = 0.6,               -- за сколько секунд камера доворачивает
     lureDist = { 500, 1500 },     -- только если она не слишком близко и не слишком далеко
+    -- пока смотришь на неё, мышь "вязнет": чувствительность игры (mouseSEN у игрока) падает
+    stareSens = 0.35,             -- доля обычной чувствительности
 }
 -- что она делает, когда на неё смотрят (игрок выберет свои из списка её анимаций)
 local A = "/Game/ROKUv3/anims/"
@@ -241,9 +243,29 @@ local function meter(frac, label)
     setText(m.text, label)
 end
 
+-- чувствительность мыши самой игры: BP_FirstPersonCharacter.mouseSEN (найдено сканом input_scan)
+local function setSens(p, k)
+    if not p then return end
+    if SHY.sens == nil then
+        local s = nil
+        pcall(function() s = num(p.mouseSEN) end)
+        if not s then return end
+        SHY.sens, SHY.sensPawn = s, p:GetAddress()
+    end
+    local want = SHY.sens * k
+    pcall(function() if math.abs((num(p.mouseSEN) or 0) - want) > 0.001 then p.mouseSEN = want end end)
+end
+local function restoreSens()
+    if SHY.sens == nil then return end
+    local p = getPawn()
+    if p and p:GetAddress() == SHY.sensPawn then pcall(function() p.mouseSEN = SHY.sens end) end
+    SHY.sens, SHY.sensPawn, SHY.sensK = nil, nil, nil
+end
+
 local function lose(why)
     if SHY.lost then return end
     SHY.lost = true
+    restoreSens()
     local r = shyRoku()
     if r then
         setShown(r, true)
@@ -285,6 +307,7 @@ shyStop = function()
     if not SHY.on then return end
     SHY.on = false
     meter(nil)
+    restoreSens()
     local r = SHY.addr and rokuAt(SHY.addr)
     if r then
         setShown(r, true)
@@ -294,7 +317,7 @@ shyStop = function()
     SHY.addr = nil
     log("Bashful: stopped")
 end
-onForgetRefs(function() SHY.addr = nil end)
+onForgetRefs(function() SHY.addr = nil; SHY.sens, SHY.sensPawn, SHY.sensK = nil, nil, nil end)
 function shyActive() return SHY.on end
 
 every(50, function()
@@ -383,6 +406,12 @@ every(50, function()
             end
         end
     end
+    -- мышь вязнет, пока смотришь (плавно, чтобы не дёргалось)
+    local target = (stareUp or SHY.lure) and CFG.stareSens or 1
+    SHY.sensK = SHY.sensK or 1
+    SHY.sensK = SHY.sensK + (target - SHY.sensK) * math.min(1, dt * 6)
+    if math.abs(SHY.sensK - 1) < 0.01 and target == 1 then SHY.sensK = 1 end
+    setSens(p, SHY.sensK)
     if not stareUp then SHY.stare = math.max(0, SHY.stare - dt * CFG.decay) end
     if not nearUp then SHY.near = math.max(0, SHY.near - dt * CFG.decay) end
 
