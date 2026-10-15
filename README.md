@@ -65,6 +65,7 @@ One per run (or let fate decide).
 - **GON+ health and stamina bars** — at the bottom center, in the corner like the game, or terminal-style with numbers; they change color with the mode.
 - **Two interface styles** — like the game's pause menu, or **Terminal**: a side panel like a computer in the complex.
 - **Victory and defeat screens** for every mode and mutator.
+- **Game pop-ups** (in Settings) — hide the game's own pop-ups (+RUN+, item names, "note acquired") so they don't clash with the modes.
 - **Graphics / FPS** (in Settings) — render scale, shadows, reflections, fog, anti-aliasing, FPS limit,
   presets and an FPS counter. For PCs where the game drops frames.
 - Everything is configurable in **Settings**.

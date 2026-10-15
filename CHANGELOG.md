@@ -4,6 +4,7 @@
 
 - **Settings → Game pop-ups** (on / off): hides the game's pop-up hints — "+RUN+" when she chases you,
   "+ NOTE ACQUIRED + PAUSE TO READ +" and item names when you pick something up. They clash with the modes.
+  New hints are caught the moment they appear and are born invisible — no flicker.
 - **New mode: Bashful.** Idea by VinoPrincess, in the spirit of SCP-096: Roku can't see you, but she feels your gaze.
   She doesn't walk — she flickers out and appears again near you: ahead, behind, around the corner.
   Two ways to lose: look at her too long (she's on screen and nothing hides her), or come too close

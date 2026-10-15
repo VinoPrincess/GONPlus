@@ -66,6 +66,8 @@ Graphics/FPS   for PCs where the game drops frames: render scale, quality,
                shadows, reflections, fog, anti-aliasing, effects, FPS limit,
                presets and an FPS counter. "game" = the game's own value;
                "Reset to game" puts everything back.
+Game pop-ups   off hides the game's own pop-ups: +RUN+, item names,
+               "note acquired - pause to read".
 Also           chaos timing, speedrun panel size and position.
 
 
