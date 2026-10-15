@@ -102,6 +102,9 @@ local function currentOutfit()
     return i or 1
 end
 
+local OUTFIT = { want = nil, addr = nil, at = 0, done = nil }   -- выбранный в нашем меню наряд
+onForgetRefs(function() OUTFIT.addr, OUTFIT.done = nil, nil end)
+
 local function setOutfit(i)
     local o = OUTFITS[i]
     -- на Року сразу (кроме Nightmare: там она в Dark по правилам режима)
@@ -116,8 +119,31 @@ local function setOutfit(i)
         pcall(function() sg.SelectedOutfit = o.save or o.row end)
         saved = sgSave(sg, SLOT_PROGRESS)
     end
+    OUTFIT.want, OUTFIT.done = i, nil
     log("Game settings: outfit " .. o.row .. (saved and " (saved)" or " (not saved)"))
 end
+
+-- Року появляется позже (после лифта и триггера за воротами), а наряд выбирают в окне до неё.
+-- Если игра при её появлении не взяла наряд из сохранения — надеваем сами (один раз на каждую новую Року).
+every(500, function()
+    if not OUTFIT.want then return end
+    local r = getRoku()
+    if not r then return end
+    local addr = r:GetAddress()
+    if addr ~= OUTFIT.addr then OUTFIT.addr, OUTFIT.at = addr, os.clock() end
+    if OUTFIT.done == addr or os.clock() - OUTFIT.at < 1 then return end
+    OUTFIT.done = addr
+    if R.base == "nightmare" and R.phase == "running" then return end
+    local o = OUTFITS[OUTFIT.want]
+    local cur = nil
+    pcall(function() cur = r.CurrentSkin:ToString() end)
+    if cur and cur:lower() == o.row:lower() then
+        log("Game settings: Roku appeared already wearing " .. o.row)
+        return
+    end
+    local ok = pcall(function() r:ApplyOutfit(FName(o.row)) end)
+    log("Game settings: Roku appeared in " .. tostring(cur) .. ", dressed in " .. o.row .. " -> " .. tostring(ok))
+end)
 
 ------------------------------------------------------------------------
 -- сложность
