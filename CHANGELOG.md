@@ -2,6 +2,9 @@
 
 ## Unreleased (1.1)
 
+- **Run intros:** the mode / mutator name now comes with a short line under it that tells what you're in for
+  ("+ BASHFUL +" — *Don't make her blush.*; "+ NIGHTMARE +" — *Lights out. One hit. Nowhere to hide. Good luck.*).
+  Mode first, then the mutator. Chaos shows the line of every new mutator. Replaces the old start banners.
 - **The game's own settings in the GON+ window** — no need to visit the game's main menu any more:
   - *Roku:* her outfit, right on the main screen. Changes on her at once and is saved for the game too
     (same as its Customize menu). Locked outfits are skipped.

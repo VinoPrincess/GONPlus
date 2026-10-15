@@ -698,6 +698,19 @@ local function buildUI()
         fs:SetPosition({ X = 0, Y = -260 })
         t:SetVisibility(VIS_HIDE)
         UI.flash = t
+        -- подпись под ней: что сейчас будет (подписи режимов и мутаторов, TAGLINE в run.lua)
+        local s2 = construct("/Script/UMG.TextBlock", tree)
+        s2:SetText(FText(""))
+        setColor(s2, { R = 1, G = 1, B = 1, A = 0 })
+        setFont(s2, "main", 26)
+        center(s2)
+        local ss = canvas:AddChildToCanvas(s2)
+        pcall(function() ss:SetAutoSize(true) end)
+        ss:SetAnchors({ Minimum = { X = 0.5, Y = 0.5 }, Maximum = { X = 0.5, Y = 0.5 } })
+        ss:SetAlignment({ X = 0.5, Y = 0.5 })
+        ss:SetPosition({ X = 0, Y = -205 })
+        s2:SetVisibility(VIS_HIDE)
+        UI.flashSub = s2
     end
 
     -- свои полоски здоровья и выносливости (на месте родных, в их стиле)

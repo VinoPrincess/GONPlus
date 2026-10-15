@@ -253,18 +253,31 @@ function runColor()
     return GAME.blue
 end
 
-function flash(text, sec, col)
+-- sub — подпись под надписью (белая, мельче); без неё подпись прячется
+function flash(text, sec, col, sub)
     if not valid(UI.flash) then return end
     col = col or runColor()
     UI.flashGen = (UI.flashGen or 0) + 1
     local gen = UI.flashGen
     setText(UI.flash, text)
     UI.flash:SetVisibility(VIS_SHOW)
+    local st = valid(UI.flashSub) and UI.flashSub or nil
+    if st then
+        setText(st, sub or "")
+        st:SetVisibility(sub and VIS_SHOW or VIS_HIDE)
+    end
     local hold = (sec or 2.5) * 1000
-    local function alpha(a) pcall(function() setColor(UI.flash, { R = col.R, G = col.G, B = col.B, A = a }) end) end
+    local function alpha(a)
+        pcall(function() setColor(UI.flash, { R = col.R, G = col.G, B = col.B, A = a }) end)
+        if st and sub then pcall(function() setColor(st, { R = 1, G = 1, B = 1, A = a * 0.92 }) end) end
+    end
     for i = 0, 8 do after(i * 30, function() if UI.flashGen == gen then alpha(i / 8) end end) end
     for i = 0, 12 do after(hold + i * 50, function() if UI.flashGen == gen then alpha(1 - i / 12) end end) end
-    after(hold + 650, function() if UI.flashGen == gen then UI.flash:SetVisibility(VIS_HIDE) end end)
+    after(hold + 650, function()
+        if UI.flashGen ~= gen then return end
+        UI.flash:SetVisibility(VIS_HIDE)
+        if st then st:SetVisibility(VIS_HIDE) end
+    end)
 end
 
 -- родные полоски и счётчик игры: прячем, пока показываем свои

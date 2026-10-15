@@ -1,0 +1,10 @@
+-- подписи на старте: название крупно + строка о сути (Bashful: "Don't make her blush.")
+TESTS = arg[0]:match("^(.*)[/\\]") or "."
+dofile(TESTS .. "/mock.lua")
+LOAD(arg[1])
+run(600)
+setMode("BASHFUL")
+startRun()
+check(hasText("^%+ BASHFUL %+$"), "mode title shown")
+check(hasText("^Don't make her blush%.$"), "mode tagline shown under it")
+DONE("taglines")

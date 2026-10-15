@@ -156,7 +156,7 @@ local function chaosPick()
     return pool[math.random(1, #pool)]
 end
 
-local function chaosSwitch()
+local function chaosSwitch(quiet)
     local nextId = chaosPick()
     if R.chaos.current then disableMut(R.chaos.current) end
     R.chaos.current = nextId
@@ -170,7 +170,50 @@ local function chaosSwitch()
         R.graceHp = p and num(p.health) or nil
     end
     showBanner("+ CHAOS: " .. (nextId and MUTS[nextId].name:upper() or "NONE") .. " +", 3)
-    if flash then flash("+ " .. (nextId and MUTS[nextId].name:upper() or "NONE") .. " +", 2.5, nextId and MUT_COLOR[nextId] or nil) end
+    if quiet then return nextId end
+    if flash then flash("+ " .. (nextId and MUTS[nextId].name:upper() or "NONE") .. " +", 3, nextId and MUT_COLOR[nextId] or nil, nextId and TAGLINE[nextId] or nil) end
+    return nextId
+end
+
+------------------------------------------------------------------------
+-- Подписи на старте: название крупно + под ним короткая (иногда шутливая) строка о сути.
+-- Новым режимам и мутаторам — сюда же. Хаос показывает подпись каждого нового мутатора.
+------------------------------------------------------------------------
+TAGLINE = {
+    normal    = "66 apples, one way out. She'll be around.",
+    ["normal@easy"] = "The shelves are generous today.",
+    ["normal@hard"] = "Less of everything. Except her.",
+    stealth   = "If she sees you, it's over. Be a shadow.",
+    stealthN  = "%d of them now. Not one of them can see you.",
+    lovesick  = "She's drunk and clingy. Don't fall for her.",
+    nightmare = "Lights out. One hit. Nowhere to hide. Good luck.",
+    shy       = "Don't make her blush.",
+    chaos     = "Something new every %d seconds. First up: %s.",
+    reactor   = "The reactor is failing. Get out before it blows.",
+    critical  = "It's getting worse. The lights won't hold.",
+    meltdown  = "It's hot, it's red, and she's in a mood.",
+    zerohour  = "One minute. Every apple buys you twenty seconds.",
+    slippery  = "Butterfingers. Things slip out of your hands.",
+    sutegoma  = "You're bleeding. Medkits are your best friends now.",
+    twins     = "There are two of her now. Double the trouble.",
+    nofood    = "No snacks for her today. Find another way.",
+    zoomies   = "She's got the zoomies. Sprint, rest, sprint again.",
+    razor     = "Sharper claws. Every hit hurts more.",
+}
+
+-- показать по очереди: { {title, sub, col}, ... }
+function runIntro(list)   -- глобальная: в главном куске лимит 200 local
+    if not flash then return end
+    local t = 0
+    for _, e in ipairs(list) do
+        after(t, function() if R.phase == "running" then flash(e[1], e[2] and 3.6 or 2.5, e[3], e[2]) end end)
+        t = t + (e[2] and 4400 or 3200)
+    end
+end
+function mutIntro(id)
+    local m = MUTS[id]
+    if not m then return nil end
+    return { "+ " .. m.name:upper() .. " +", TAGLINE[id], MUT_COLOR[id] }
 end
 
 local function startRun(mode, mutId)
@@ -187,34 +230,37 @@ local function startRun(mode, mutId)
 
     saveSettings()
 
-    -- режим (правила)
+    -- режим (правила); надписи — одной очередью после (название + подпись)
+    local shows = {}
     if R.base == "stealth" then
         stealthStart(R.rokus)
-        if mode == "none" then showBanner("+ PURE STEALTH: " .. R.rokus .. " ROKU +", 4) end
-        if flash then flash("+ PURE STEALTH +", 2.5) end
+        shows[#shows + 1] = { "+ PURE STEALTH +", R.rokus > 1 and string.format(TAGLINE.stealthN, R.rokus) or TAGLINE.stealth, MODE_COLOR.stealth }
     elseif R.base == "lovesick" then
         R.loveMin = P.selLoveMin or 8
-        if flash then flash("+ LOVESICK +", 2.5) end
+        shows[#shows + 1] = { "+ LOVESICK +", TAGLINE.lovesick, MODE_COLOR.lovesick }
         if loveStart then loveStart(R.loveMin) end
     elseif R.base == "nightmare" then
-        if flash then flash("+ NIGHTMARE +", 2.5) end
+        shows[#shows + 1] = { "+ NIGHTMARE +", TAGLINE.nightmare, MODE_COLOR.nightmare }
         if nightmareStart then nightmareStart() end
     elseif R.base == "shy" then
-        if flash then flash("+ BASHFUL +", 2.5, MODE_COLOR.shy) end
-        if mode == "none" then showBanner("+ DON'T STARE AT HER +", 4) end
+        shows[#shows + 1] = { "+ BASHFUL +", TAGLINE.shy, MODE_COLOR.shy }
         if shyStart then shyStart() end
     end
     -- мутатор (условия)
     if mode == "pick" or mode == "random" then
         enableMut(mutId)
-        showBanner("+ " .. MUTS[mutId].name:upper() .. " +", 3)
-        if flash then flash("+ " .. MUTS[mutId].name:upper() .. " +", 2.5, MUT_COLOR[mutId]) end
+        shows[#shows + 1] = mutIntro(mutId)
     elseif mode == "chaos" then
         R.chaos = { current = nil, nextAt = 0 }
-        chaosSwitch()
+        local first = chaosSwitch(true)
+        shows[#shows + 1] = { "+ CHAOS +", string.format(TAGLINE.chaos, math.max(10, P.chaosInterval),
+            first and MUTS[first].name or "nothing"), MODE_COLOR.chaos }
     elseif R.base == "normal" then
-        showBanner("+ NORMAL RUN +", 2)
+        local k = recordKey() or "normal"
+        local label = (R.diff == 1 and "+ NORMAL RUN: EASY +") or (R.diff == 3 and "+ NORMAL RUN: HARD +") or "+ NORMAL RUN +"
+        shows[#shows + 1] = { label, TAGLINE[k] or TAGLINE.normal }
     end
+    runIntro(shows)
     log("Run started: " .. R.base .. ", mutator mode " .. mode .. (mutId and (" " .. mutId) or "") .. ", key " .. tostring(recordKey()))
 end
 
