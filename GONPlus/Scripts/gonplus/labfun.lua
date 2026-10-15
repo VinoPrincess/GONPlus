@@ -545,6 +545,46 @@ LAB_EXTRA_TABS = {
         action("Save this spot", "Remember where you stand.", function()
             local l = getPawn():K2_GetActorLocation(); FUN.spot = v3(l.X, l.Y, l.Z); return "Spot saved"
         end, nil, false),
+        action("Scan input  -> input_scan.txt", "For Bashful: finds mouse sensitivity / look rate settings on the controller, the player and the game settings.", function()
+            local out = {}
+            local function dumpObj(title, obj)
+                out[#out + 1] = "== " .. title .. ": " .. (valid(obj) and obj:GetFullName() or "not found")
+                if not valid(obj) then return end
+                local cls = nil; pcall(function() cls = obj:GetClass() end)
+                local guard = 0
+                while cls and valid(cls) and guard < 10 do
+                    local cname = "?"; pcall(function() cname = cls:GetFName():ToString() end)
+                    pcall(function()
+                        cls:ForEachProperty(function(pr)
+                            local n = pr:GetFName():ToString()
+                            local l = n:lower()
+                            for _, w in ipairs({ "sens", "scale", "mouse", "look", "turn", "input", "rate", "invert", "aim" }) do
+                                if l:find(w, 1, true) then
+                                    local v = "?"; pcall(function() v = tostring(obj[n]) end)
+                                    out[#out + 1] = "  [" .. cname .. "] " .. n .. " = " .. v
+                                    break
+                                end
+                            end
+                        end)
+                    end)
+                    local ok, sup = pcall(function() return cls:GetSuperStruct() end)
+                    cls = ok and sup or nil
+                    guard = guard + 1
+                end
+            end
+            dumpObj("PlayerController", getPC())
+            dumpObj("Player", getPawn())
+            local gus = nil; pcall(function() gus = FindFirstOf("GameUserSettings") end)
+            dumpObj("GameUserSettings", gus)
+            for _, cls in ipairs({ "EnhancedInputLocalPlayerSubsystem", "EnhancedPlayerInput", "PlayerInput" }) do
+                local o = nil; pcall(function() o = FindFirstOf(cls) end)
+                dumpObj(cls, o)
+            end
+            local path = ROOT .. "\\input_scan.txt"
+            local fh = io.open(path, "w"); if not fh then return "Could not write input_scan.txt" end
+            fh:write(table.concat(out, "\n")); fh:close()
+            return "Saved input_scan.txt (" .. #out .. " lines)"
+        end, nil, false),
         action("Return to saved spot", "Teleport back to the saved spot.", function()
             if not FUN.spot then return "No spot saved yet" end
             getPawn():K2_SetActorLocation(FUN.spot, false, {}, true); return "Back again"

@@ -7,6 +7,8 @@
   Two ways to lose: look at her too long (she's on screen and nothing hides her), or come too close
   (near you *and* in plain sight — a wall between you doesn't count). A pink meter at the top shows how
   embarrassed she is; it fills while you stare or stand close and slowly fades. She never attacks.
+  She's invisible until you look right at her or come close (surprise behind the door), fidgets shyly when you
+  look at her, and every 35–60 s "LOOK AT ME" pulls your camera towards her — turn away in time.
   Not with Twins, Zoomies or Razor Claws.
 - Zero Hour: its own victory screen ("JUST IN TIME") instead of the reactor's.
 - **New mutator: Zero Hour.** One minute on the clock; every apple adds 20 seconds, but you can bank 2:30 at most —

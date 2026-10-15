@@ -23,7 +23,23 @@ local CFG = {
     stareFull = 2.2,              -- секунд взгляда до проигрыша (на 12 м; ближе — быстрее)
     nearDist = 400,               -- "слишком близко" (см)
     nearFull = 1.5,               -- секунд рядом до проигрыша
-    decay = 0.25,                 -- спадает за секунду (доля шкалы)
+    decay = 0.1,                  -- спадает за секунду (доля шкалы); было 0.25 — слишком легко
+    -- невидима, пока не посмотришь прямо на неё или не подойдёшь (сюрприз за дверью)
+    revealCone = 12,              -- градусов от центра экрана
+    revealDist = 650,             -- см: ближе — проявляется сама (если ничто не загораживает)
+    -- "манящая взгляд": камера сама поворачивается к ней — успей отвернуться
+    lureEvery = { 35, 60 },       -- секунд между событиями
+    lureTurn = 0.6,               -- за сколько секунд камера доворачивает
+    lureDist = { 500, 1500 },     -- только если она не слишком близко и не слишком далеко
+}
+-- что она делает, когда на неё смотрят (игрок выберет свои из списка её анимаций)
+local A = "/Game/ROKUv3/anims/"
+local SHY_ANIMS = {
+    A .. "lookarounds/lookaround_fingerbite2_Montage.lookaround_fingerbite2_Montage",
+    A .. "lookarounds/n_LA_lick1_Montage.n_LA_lick1_Montage",
+    A .. "lookarounds/lookaround_triangle_Montage.lookaround_triangle_Montage",
+    A .. "lookarounds/lookaround_lookbackL_Montage.lookaround_lookbackL_Montage",
+    A .. "lookarounds/lookaround_lookbackR_Montage.lookaround_lookbackR_Montage",
 }
 
 local function v3(x, y, z) return { X = x, Y = y, Z = z } end
@@ -150,13 +166,62 @@ local function appear(r)
     pcall(function() r:K2_SetActorLocation(loc, false, {}, true) end)
     local yaw = math.deg(math.atan(me.Y - loc.Y, me.X - loc.X))
     pcall(function() r:K2_SetActorRotation({ Pitch = 0, Yaw = yaw, Roll = 0 }, false) end)
-    -- призрачное появление: мигнула пару раз
-    local addr = r:GetAddress()
-    setShown(r, true)
-    for i, on in ipairs({ false, true, false, true }) do
-        after(i * 70, function() local rr = rokuAt(addr); if rr and SHY.on and SHY.state == "shown" then setShown(rr, on) end end)
-    end
+    -- стоит там, но невидима: проявится, когда посмотришь прямо на неё или подойдёшь
+    pcall(function() r:SetActorEnableCollision(true) end)
+    pcall(function() r:SetActorHiddenInGame(true) end)
+    SHY.revealed, SHY.animDone = false, false
     log(string.format("Bashful: appeared %s, %.0f m away", kind, vlen(loc.X - me.X, loc.Y - me.Y, 0) / 100))
+    return true
+end
+
+-- проявиться: мигнула пару раз, как призрак
+local function reveal(r, why)
+    if SHY.revealed then return end
+    SHY.revealed = true
+    local addr = r:GetAddress()
+    pcall(function() r:SetActorHiddenInGame(false) end)
+    for i, on in ipairs({ false, true, false, true }) do
+        after(i * 60, function()
+            local rr = rokuAt(addr)
+            if rr and SHY.on and SHY.state == "shown" and SHY.revealed then pcall(function() rr:SetActorHiddenInGame(not on) end) end
+        end)
+    end
+    log("Bashful: revealed (" .. why .. ")")
+end
+
+-- угол (градусы) между взглядом камеры и направлением на точку
+local function angleTo(cam, p)
+    local v = v3(p.X - cam.loc.X, p.Y - cam.loc.Y, p.Z - cam.loc.Z)
+    local d = math.max(1, vlen(v.X, v.Y, v.Z))
+    local c = math.max(-1, math.min(1, dot(v, cam.fwd) / d))
+    return math.deg(math.acos(c)), d
+end
+
+-- "манящая взгляд": плавно довернуть камеру на неё
+local function lureTick(g, r)
+    local L = SHY.lure; if not L then return end
+    local pc = getPC(); if not pc then SHY.lure = nil return end
+    local k = math.min(1, (g - L.t0) / CFG.lureTurn)
+    local e = 1 - (1 - k) * (1 - k)
+    local dy = ((L.to.Yaw - L.from.Yaw + 540) % 360) - 180
+    local rot = { Pitch = L.from.Pitch + (L.to.Pitch - L.from.Pitch) * e, Yaw = L.from.Yaw + dy * e, Roll = 0 }
+    pcall(function() pc:SetControlRotation(rot) end)
+    if k >= 1 then SHY.lure = nil end
+end
+local function startLure(g, r, cam)
+    local pc = getPC(); if not pc then return false end
+    local from = nil
+    pcall(function() local c = pc:GetControlRotation(); from = { Pitch = num(c.Pitch) or 0, Yaw = num(c.Yaw) or 0 } end)
+    if not from then return false end
+    if from.Pitch > 180 then from.Pitch = from.Pitch - 360 end
+    local pts = rokuPoints(r)
+    local h = pts[2] or pts[1]
+    local dx, dy, dz = h.X - cam.loc.X, h.Y - cam.loc.Y, h.Z - cam.loc.Z
+    local to = { Yaw = math.deg(math.atan(dy, dx)), Pitch = math.deg(math.atan(dz, math.max(1, vlen(dx, dy, 0)))) }
+    SHY.lure = { t0 = g, from = from, to = to }
+    reveal(r, "lure")
+    flash("+ LOOK AT ME +", 2, PINK)
+    log("Bashful: lure - the camera turns to her")
     return true
 end
 
@@ -211,7 +276,8 @@ shyStart = function()
     SHY.on, SHY.lost, SHY.t0 = true, false, g
     SHY.stare, SHY.near = 0, 0
     SHY.state, SHY.until_ = "gone", g + CFG.graceStart
-    SHY.addr = nil
+    SHY.addr, SHY.lure, SHY.revealed = nil, nil, false
+    SHY.nextLure = g + CFG.graceStart + rnd(CFG.lureEvery[1], CFG.lureEvery[2])
     log("Bashful: started")
 end
 
@@ -263,20 +329,48 @@ every(50, function()
             else
                 SHY.until_ = g + 1
             end
-        else
+        elseif not SHY.lure then
             setShown(r, false)
-            SHY.state = "gone"
+            SHY.state, SHY.revealed = "gone", false
             SHY.until_ = g + rnd(CFG.goneMin, CFG.goneMax)
         end
     end
+    lureTick(g, r)
 
     -- шкалы: взгляд и близость
     local stareUp, nearUp = false, false
     if SHY.state == "shown" then
         local cam = camera()
         if cam then
-            local d = seenAt(r, cam)
+            -- проявиться: смотришь прямо на неё или подошёл, и ничто не загораживает
+            if not SHY.revealed then
+                for _, pt in ipairs(rokuPoints(r)) do
+                    local ang, dist = angleTo(cam, pt)
+                    if (ang < CFG.revealCone or dist < CFG.revealDist) and clearLine(cam.loc, pt, r) then
+                        reveal(r, ang < CFG.revealCone and "looked" or "close")
+                        break
+                    end
+                end
+            end
+            -- "манящая взгляд"
+            if not SHY.lure and g >= SHY.nextLure then
+                local l = r:K2_GetActorLocation()
+                local d = vlen(l.X - cam.loc.X, l.Y - cam.loc.Y, 0)
+                local ok = d >= CFG.lureDist[1] and d <= CFG.lureDist[2] and clearLine(cam.loc, v3(l.X, l.Y, l.Z), r)
+                if ok and startLure(g, r, cam) then
+                    SHY.nextLure = g + rnd(CFG.lureEvery[1], CFG.lureEvery[2])
+                else
+                    SHY.nextLure = g + 2
+                end
+            end
+            local d = SHY.revealed and seenAt(r, cam) or nil
             if d then
+                -- на неё смотрят: смущённо что-нибудь делает (один раз за появление)
+                if not SHY.animDone then
+                    SHY.animDone = true
+                    local m = StaticFindObject(SHY_ANIMS[math.random(1, #SHY_ANIMS)])
+                    if valid(m) then pcall(function() r:PlayAnimMontage(m, 1.0, FName("None")) end) end
+                end
                 stareUp = true
                 local speed = math.max(0.5, math.min(3, 1200 / d))
                 SHY.stare = SHY.stare + dt * speed / CFG.stareFull
