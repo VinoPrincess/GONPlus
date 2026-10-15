@@ -123,6 +123,25 @@ SCREENS.main = function()
         act = function() UI.screen = "pick"; UI.sel = 1 end }
     items[#items + 1] = { label = "Settings", desc = "Graphics and FPS, chaos timing, speedrun panel, bars.",
         act = function() UI.screen = "settings"; UI.sel = 1 end }
+    -- выход из игры сразу (раньше: забег -> пауза -> выйти -> выйти). Второй клик за 3 с — подтверждение.
+    local armed = UI.quitArmed and os.clock() < UI.quitArmed
+    items[#items + 1] = { label = armed and "Quit game   click again to quit" or "Quit game",
+        desc = "Closes the game right away. Click twice so it can't happen by accident.",
+        act = function()
+            if UI.quitArmed and os.clock() < UI.quitArmed then
+                log("Quit game from the GON+ menu")
+                local pc = getPC()
+                local ok = pcall(function()
+                    StaticFindObject("/Script/Engine.Default__KismetSystemLibrary"):QuitGame(pc, pc, 0, false)
+                end)
+                if not ok then
+                    pcall(function() StaticFindObject("/Script/Engine.Default__KismetSystemLibrary"):ExecuteConsoleCommand(pc, "quit", pc) end)
+                end
+            else
+                UI.quitArmed = os.clock() + 3
+                windowNote("Click QUIT GAME again to close the game", 3)
+            end
+        end }
     return "NEW RUN", "Mode + mutator. Your choice is remembered.", items, "click / Enter - choose    sides / arrows - change"
 end
 

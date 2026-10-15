@@ -2,6 +2,7 @@
 
 ## Unreleased (1.1)
 
+- **Quit game** at the bottom of the choice window: closes the game right away (click twice, so it can't happen by accident).
 - **Settings → Game pop-ups** (on / off): hides the game's pop-up hints — "+RUN+" when she chases you,
   "+ NOTE ACQUIRED + PAUSE TO READ +" and item names when you pick something up. They clash with the modes.
   New hints are caught the moment they appear and are born invisible — no flicker.
