@@ -68,26 +68,60 @@ every(250, function()
 end)
 onForgetRefs(function() hidden = {} end)
 
--- разведка (только с открытой лабораторией): какие надписи показывает игра
+-- разведка (только с открытой лабораторией): какие надписи и виджеты показывает игра.
+-- Первая версия молчала (в логе ни одной строки) — теперь пишем всё подряд и сводку,
+-- чтобы понять, что не так: другой класс надписей, другое имя или пустой текст.
+local watch = { samples = 0, nextSummary = 0, widgets = {} }
+local TEXT_CLASSES = { "TextBlock", "RichTextBlock", "CommonTextBlock", "MultiLineEditableText", "EditableText" }
 every(1000, function()
     if not P.labUnlocked or not getPawn() then return end
-    for _, t in ipairs(FindAllOf("TextBlock") or {}) do
-        if valid(t) then
-            local cls, name = ownerOf(t:GetFullName())
-            if cls then
-                local txt = ""
+    local total, withText, matched = 0, 0, 0
+    for _, tc in ipairs(TEXT_CLASSES) do
+        for _, t in ipairs(FindAllOf(tc) or {}) do
+            if valid(t) then
+                total = total + 1
+                local full = ""
+                pcall(function() full = t:GetFullName() end)
+                if watch.samples < 5 and full ~= "" then
+                    watch.samples = watch.samples + 1
+                    log("Game text sample name: " .. full)
+                end
+                local txt = nil
                 pcall(function() txt = t:GetText():ToString() end)
+                if type(txt) ~= "string" then pcall(function() txt = tostring(t.Text:ToString()) end) end
                 if type(txt) == "string" and txt:match("%S") then
-                    local key = cls .. "." .. name .. "=" .. txt
+                    withText = withText + 1
+                    local cls, name = ownerOf(full)
+                    if cls then matched = matched + 1 end
+                    local where = cls and (cls .. "." .. name) or full:match("([^%.:]+%.[^%.:]+)$") or full
+                    local key = tc .. where .. "=" .. txt
                     if not seen[key] then
                         seen[key] = true
                         local vis = "?"
                         pcall(function() vis = tostring(t:IsVisible()) end)
-                        log("Game text: " .. cls .. "." .. name .. " = '" .. txt:gsub("\n", " / ") .. "' (visible " .. vis .. ")")
+                        log("Game text: [" .. tc .. "] " .. where .. " = '" .. txt:gsub("[\r\n]+", " / ") .. "' (visible " .. vis .. ")")
                     end
                 end
             end
         end
+    end
+    -- целые виджеты игры на экране (имена классов)
+    for _, w in ipairs(FindAllOf("UserWidget") or {}) do
+        if valid(w) then
+            local cls = ""
+            pcall(function() cls = w:GetClass():GetFName():ToString() end)
+            local inView = false
+            pcall(function() inView = w:IsInViewport() == true end)
+            if cls ~= "" and inView and not watch.widgets[cls] then
+                watch.widgets[cls] = true
+                log("Game widget on screen: " .. cls)
+            end
+        end
+    end
+    local g = os.clock()
+    if g >= watch.nextSummary then
+        watch.nextSummary = g + 30
+        log(string.format("Game text watch: %d text widgets, %d with text, %d matched", total, withText, matched))
     end
 end)
 
