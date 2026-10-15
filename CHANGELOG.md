@@ -9,7 +9,7 @@
     always play on Normal; if the game was set to something else, START restarts the level once and the run begins by itself.
     Records are kept apart for each difficulty.
   - *Settings → Mouse sensitivity* — the game's own, saved for the game too.
-  - *Settings → Quick start* (on by default): launching the game skips its main menu and goes straight to the GON+ window.
+  - *Settings → Quick start* (off by default): launching the game skips its main menu and goes straight to the GON+ window.
     Only once per launch — if you quit to the main menu yourself, it stays there.
 - **Quit game** at the bottom of the choice window: closes the game right away (click twice, so it can't happen by accident).
 - **Settings → Game pop-ups** (on / off): hides the game's pop-up hints — "+RUN+" when she chases you,
