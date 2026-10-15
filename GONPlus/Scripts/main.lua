@@ -20,6 +20,7 @@
     gameui      Settings -> Game pop-ups: прятать всплывающие подсказки самой игры
     gamecfg     настройки игры в нашем меню: наряд Року, сложность, мышь, быстрый старт
     mutators    мутаторы игрока
+    sutegoma    режим SUTEGOMA: кровопотеря, перевязка, запах крови, слабость
     nightmare   режим Nightmare
     lovesick    режим Lovesick
     shy         режим Bashful (Скромница): Року-призрак, нельзя смотреть и подходить
@@ -31,7 +32,7 @@
 ]]
 
 local FILES = { "core", "run", "ui", "menu", "hud", "input", "lab", "labfun", "stealth",
-                "endscreens", "darkness", "graphics", "gameui", "gamecfg", "mutators", "nightmare", "lovesick", "shy", "finish" }
+                "endscreens", "darkness", "graphics", "gameui", "gamecfg", "mutators", "sutegoma", "nightmare", "lovesick", "shy", "finish" }
 
 local function say(m) print("[GON+] " .. tostring(m) .. "\n") end
 

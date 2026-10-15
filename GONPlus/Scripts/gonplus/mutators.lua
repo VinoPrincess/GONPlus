@@ -30,7 +30,9 @@ end
 local function rnd(a, b) return a + math.random() * (b - a) end
 
 -- Сцена смерти от мутатора: надпись в стиле игры, затемнение, потом смерть
-local function deathScene(o)
+local deathScene
+function DEATH_SCENE(o) return deathScene(o) end   -- для разделов в своих файлах (sutegoma.lua)
+deathScene = function(o)
     if R.phase ~= "running" or R.scene then return end
     R.scene = true
     o.scripted = true
@@ -381,83 +383,7 @@ mutator {
     end,
 }
 
-------------------------------------------------------------------------
--- SUTEGOMA: кровотечение, больше аптечек
-------------------------------------------------------------------------
-local MEDKIT = "/Game/INTERACTION/BP_Medikit.BP_Medikit_C"
-local BLEED_PER_SEC = 1 / 300       -- от полного здоровья до нуля за 5 минут (в покое)
--- Кровопотеря (идея игрока 15.10.2026): бег усиливает кровотечение.
--- Шкала копится при беге: потратил всю выносливость за раз — шкала полная.
--- Спадает чуть медленнее, чем восстанавливается выносливость. Полная шкала = кровь идёт BLOOD.max раз быстрее.
-BLOOD = { max = 4, drain = 0.8 }
-
-mutator {
-    id = "sutegoma", name = "SUTEGOMA", tags = { "health" }, noNightmare = true, modeOnly = true,
-    desc = "You are bleeding out: health slowly drains. Heal up from time to time - there are more medkits around.",
-    on = function(s)
-        s.medkits = 0
-        local cls = itemClass(MEDKIT)
-        local pawn = getPawn()
-        if cls and pawn then
-            for _, l in ipairs(itemSpots(14, 1500)) do
-                local a = nil
-                pcall(function()
-                    a = pawn:GetWorld():SpawnActor(cls, { X = l.X, Y = l.Y, Z = l.Z + 15 }, { Pitch = 0, Yaw = math.random(0, 359), Roll = 0 })
-                end)
-                if valid(a) then s.medkits = s.medkits + 1 end
-            end
-        end
-        log("SUTEGOMA: extra medkits placed: " .. s.medkits .. (cls and "" or " (medkit class not found)"))
-    end,
-    tick = function(s, dt)
-        local p = getPawn(); if not p then return end
-        local hp = num(p.health); if not hp then return end
-        dt = dt or 0.25
-        -- кровопотеря от бега: по расходу выносливости
-        local sm, st = nil, nil
-        pcall(function() sm = num(p["Sprint Meter"]) end)
-        pcall(function() st = num(p["Sprint Time"]) end)
-        st = (st and st > 0) and st or 5
-        s.blood = s.blood or 0
-        if sm and s.lastSM then
-            local d = sm - s.lastSM
-            if d < -0.0001 then
-                s.blood = math.min(1, s.blood + (-d) / st)                 -- вся выносливость = вся шкала
-            elseif d > 0.0001 then
-                s.regen = (s.regen or d / dt) * 0.8 + (d / dt) * 0.2      -- скорость восстановления выносливости
-                s.blood = math.max(0, s.blood - d / st * BLOOD.drain)
-            elseif sm >= st - 0.01 then                                   -- выносливость полная, шкала ещё нет
-                s.blood = math.max(0, s.blood - (s.regen or st / 4) / st * BLOOD.drain * dt)
-            end
-        end
-        s.lastSM = sm
-        if s.blood >= 0.999 and not s.fullWarned then
-            s.fullWarned = true
-            flash("+ HEMORRHAGE +", 2, GAME.blood, "Stop running. You're bleeding out.")
-        elseif s.blood < 0.6 then s.fullWarned = false end
-        hp = hp - BLEED_PER_SEC * (1 + (BLOOD.max - 1) * s.blood) * dt
-        if topMeter and R.phase == "running" then
-            if s.blood > 0.01 then topMeter(s.blood, "+ BLOOD LOSS +", GAME.blood) else topMeter(nil) end
-        end
-        if hp <= 0.001 then
-            if not s.dead then
-                s.dead = true
-                p.health = 0.001
-                log("SUTEGOMA: bled out")
-                deathScene({ title = "+ BLED OUT +", sub = "SUTEGOMA", veil = { 0.09, 0.0, 0.0 }, color = GAME.blood,
-                    fadeIn = 2.2, hold = 4, result = "dead" })
-            end
-            return
-        end
-        p.health = hp
-    end,
-    off = function(s) if topMeter then topMeter(nil) end end,
-    hud = function(s)
-        local p = getPawn()
-        local hp = p and num(p.health) or 0
-        return string.format("BLEEDING  %d%%", math.floor(hp * 100 + 0.5)), hp < 0.3
-    end,
-}
+-- SUTEGOMA (режим) — в sutegoma.lua
 
 ------------------------------------------------------------------------
 -- Двойняшки: вторая Року бродит сама по себе, но если увидит — атакует
@@ -825,7 +751,6 @@ do
         critical = { "+ SHE GOT YOU FIRST +", "The reactor never got its chance." },
         meltdown = { "+ SHE GOT YOU FIRST +", "Fast legs. Not fast enough." },
         slippery = { "+ BUTTERFINGERS +", "Should've held on tighter." },
-        sutegoma = { "+ SUTEGOMA +", "You were already bleeding. She just finished it.", { 0.09, 0, 0 }, GAME.blood },
         twins    = { "+ TWO OF HER +", "One was hunting you. The other just found you." },
         nofood   = { "+ NO TREATS +", "Trash only buys you a second. She wanted an apple." },
         zoomies  = { "+ TOO FAST +", "She never even needed to catch her breath." },

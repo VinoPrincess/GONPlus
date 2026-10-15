@@ -181,7 +181,7 @@ every(250, function()
     -- что сейчас в руке (для "Скользких рук")
     if ev.pickup then R.held, R.heldAt = ev.pickedObj, gameNow() end
     if ev.throw or ev.death then R.held = nil end
-    for _, name in ipairs({ "pickup", "throw", "damage" }) do
+    for _, name in ipairs({ "pickup", "throw", "damage", "heal" }) do
         if ev[name] then eventMuts(name) end
         if name == "throw" and ev.throw and onThrowLab then onThrowLab(ev.thrownObj) end
         if name == "throw" and ev.throw and loveOnThrow then loveOnThrow(ev.thrownObj) end

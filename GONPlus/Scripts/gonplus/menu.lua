@@ -12,7 +12,7 @@ BASES = {
     { id = "reactor", name = "Reactor",
       desc = "The reactor is failing: get out before it blows. Three levels - the higher, the less time, the more blackouts and heat." },
     { id = "sutegoma", name = "SUTEGOMA",
-      desc = "You are bleeding out: health slowly drains, there are more medkits around. Running makes it worse: the blood loss meter fills as you burn stamina (all of it at once = full) and drains a bit slower than stamina comes back. Full meter - you bleed four times faster." },
+      desc = "You are bleeding out. Running makes it worse (blood loss meter: full = 4x faster). Medkits heal half but stop the bleeding for a while. Her hits open the wound, hiding presses it. She roams far and follows the blood - bleed hard or stay put too long and she comes for you." },
     { id = "lovesick", name = "Lovesick",
       desc = "Roku is drunk and very affectionate. Survive until she sobers up. Every hug makes you fall for her; full heart = you lose. No trash, no booze - only gifts to throw at her. Gifts and spanks cool her down." },
     { id = "shy", name = "Bashful",
@@ -44,7 +44,8 @@ local function mutAllowed(id, base)
     if not m then return false end
     if m.modeOnly then return false end                  -- реактор, SUTEGOMA — теперь режимы
     if base == "reactor" and (id == "zerohour" or id == "heat" or id == "darkness" or id == "blackouts") then return false end
-    if base == "sutegoma" and (id == "onehit" or id == "razor") then return false end
+    -- SUTEGOMA: Року бродит своим путём на запах крови — с Двойняшками и Беготнёй не сочетается
+    if base == "sutegoma" and (id == "onehit" or id == "razor" or id == "twins" or id == "zoomies") then return false end
     if base == "stealth" and m.noStealth then return false end
     if base == "nightmare" and m.noNightmare then return false end
     if base == "lovesick" and not m.loveOk then return false end

@@ -9,6 +9,14 @@
     A *blood loss* meter fills as you burn stamina — use up the whole stamina bar in one go and it's full — and drains
     a bit slower than stamina comes back. The fuller it is, the faster you bleed (up to 4× at full, "HEMORRHAGE").
     You can still run — just not all the time.
+    - *Medkits only buy time:* they heal half as much, but bandage the wound — no bleeding for 35 s ("BANDAGED").
+    - *Her hits open the wound:* the blood loss meter jumps and a bandage is torn off.
+    - *Hiding spots:* pressing the wound — bleeding almost stops, the meter drains faster.
+    - *Weakness:* below 30% health the screen edges darken with your heartbeat; below 15% the camera drifts.
+    - *She follows the blood:* the complex smells of other people's blood, so yours gets lost — Roku roams on her own,
+      further away than usual, and now and then checks places you were a minute ago. But bleed out hard
+      (HEMORRHAGE) or stay in one spot too long and the scent is fresh: she comes straight for you.
+      If she sees you, she hunts as usual; lose her for 8 s and she goes back to roaming.
   - **Nightmare** is now the fourth difficulty of the plain game: Normal mode, no mutator, Difficulty: Nightmare
     (needs Hard unlocked in the game). Records kept.
   - **New mutators** — they work on their own and in Chaos: **Darkness** (lights out), **No HUD**, **No Hiding**,

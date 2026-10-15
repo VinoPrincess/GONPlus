@@ -22,4 +22,22 @@ for i = 1, 20 do PAWN["Sprint Meter"] = i * 0.25; run(260) end
 PAWN["Sprint Meter"] = 5.0; run(15000)
 local hC = PAWN.health; run(10000); local hD = PAWN.health
 check(hC - hD < 0.05, string.format("back to normal bleeding after rest (%.4f in 10 s)", hC - hD))
+-- аптечка: вдвое меньше, но перевязка (кровь стоит)
+PAWN.health = 0.5; run(500)
+HOOKS.HealUp(); PAWN.health = 0.9; run(600)
+check(math.abs(PAWN.health - 0.7) < 0.02, string.format("medkit heals half (%.3f)", PAWN.health))
+check(hasText("^%+ BANDAGED %+$"), "bandaged")
+local b0 = PAWN.health; run(5000)
+check(math.abs(PAWN.health - b0) < 0.002, "no bleeding while bandaged")
+-- удар Року: рана открывается
+HOOKS.TakeDamage(); run(600)
+check(logHas("the wound opens"), "a hit opens the wound")
+check(hasText("THE WOUND OPENS"), "bandage torn off by a hit")
+-- запах крови: Року бродит сама; стоишь на месте 40 с — идёт к тебе
+ROKU_PRESENT = true; run(5000)
+check(logHas("Roku roams on her own"), "Roku roams on her own")
+GAME_T = GAME_T + 45; run(1000)
+check(logHas("follows the blood %(you stood still%)"), "standing still: she smells you")
+-- слабость: ниже 30% пульс по краям экрана
+PAWN.health = 0.2; run(800)
 DONE("sutegoma")

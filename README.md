@@ -40,7 +40,7 @@ Updating: replace the `Scripts` folder, keep `settings.txt` and `records.txt` (y
 | **Pure Stealth** | Roku doesn't hunt you — but if she *sees* you, it's over. No hiding. Running and thrown items make noise. 1–4 Rokus. |
 | **Bashful** | She can't see you, but she feels your gaze. She flickers in and out near you — ahead, behind, around the corner. Don't stare at her, don't come close. She never attacks. |
 | **Reactor** | A countdown to the blast, three levels: **Failure** (30 min, flickering lights, red alarm at the end) · **Critical failure** (20 min, power failures plunge the complex into darkness) · **Meltdown** (17 min, red from the start, longer blackouts, heat slows stamina recovery, Roku gets faster in the last 3 minutes) |
-| **SUTEGOMA** | You are bleeding out: health slowly drains. More medkits around. |
+| **SUTEGOMA** | You are bleeding out. Running makes it worse, medkits only buy time (half the heal, but a bandage), her hits open the wound, hiding presses it. She roams far away and follows your blood — bleed hard or stay put and she comes for you. |
 | **Lovesick** | Roku is drunk and very affectionate. Survive the timer (4–12 min). Every hug makes you fall for her — a full heart and you lose. Throw gifts at her to cool her down. |
 
 ## Mutators

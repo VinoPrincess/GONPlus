@@ -326,6 +326,7 @@ local HOOKS = {
     pickup  = "/Game/INTERACTION/BP_ThrowableBase.BP_ThrowableBase_C:Pickup",
     throw   = "/Game/INTERACTION/BP_ThrowableBase.BP_ThrowableBase_C:Throw",
     spank   = PLAYER .. "EventSpank",
+    heal    = PLAYER .. "HealUp",          -- аптечка (проверено EventSpy: MedPickup + HealUp)
 }
 local pending, hooked = {}, {}
 

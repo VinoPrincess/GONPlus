@@ -46,6 +46,8 @@ local function playerCams()
     return out
 end
 
+PLAYER_CAMS = playerCams   -- камеры игрока (SUTEGOMA: пульс по краям экрана)
+
 -- экспозиция уровня: включённый безграничный PostProcessVolume с заданной компенсацией
 function levelExposure()
     local best, bestPrio = nil, -1e9

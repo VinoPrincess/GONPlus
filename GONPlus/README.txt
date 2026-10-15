@@ -34,7 +34,9 @@ Reactor      Countdown to the blast. Three levels:
                Meltdown (17 min) - red from the start, longer blackouts,
                                    the heat slows stamina recovery, and in
                                    the last 3 minutes Roku gets faster
-SUTEGOMA     You are bleeding out: health slowly drains. More medkits around.
+SUTEGOMA     You are bleeding out. Running makes it worse, medkits only buy
+             time (half the heal, but a bandage), her hits open the wound,
+             hiding presses it. She roams far and follows your blood.
 Lovesick     Roku is drunk and very affectionate. Survive the timer (4-12 min).
              Every hug makes you fall for her; a full heart means you lose.
              Throw gifts at her (or spank her) to cool her down.
