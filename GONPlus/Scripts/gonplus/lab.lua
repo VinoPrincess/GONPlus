@@ -1252,6 +1252,8 @@ SCREENS.lab = function()
           act = function() UI.labStatus = scanUIStyle() end },
         { label = "Scan for mutators  -> mut_scan.txt", desc = "Player and item functions (for Slippery Hands), item spawner, Roku skins. Hold an item while scanning.",
           act = function() UI.labStatus = scanMutators and scanMutators() or "not ready" end },
+        { label = "Scan difficulty  -> difficulty_scan_N.txt", desc = "Items on the map by type, spawners, player/Roku/director values. Do it right after the start on Easy, Normal and Hard and send all three.",
+          act = function() UI.labStatus = scanDifficulty and scanDifficulty() or "not ready" end },
     }
     -- вкладки: раскладываем пункты по разделам по началу подписи
     local TABS = { { id = "run", name = "Run" } }

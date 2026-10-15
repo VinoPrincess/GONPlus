@@ -207,4 +207,150 @@ every(2000, function()
     log("Main menu scan: +" .. added .. " widgets -> mainmenu_scan.txt (" .. #menuLines .. " lines)")
 end)
 
+------------------------------------------------------------------------
+-- Разведка сложности (Lab -> Scans -> difficulty_scan.txt).
+-- Что меняет Easy/Normal/Hard: сколько и каких предметов лежит на карте, переменные
+-- игрока/Року/спавнеров/директора, а хуки HARDMODE/easymode пишут в лог, когда игра их зовёт.
+-- Идея: снять скан на каждой сложности и сравнить файлы.
+------------------------------------------------------------------------
+local DIFF_PAT = { "diff", "hard", "easy", "mode", "spawn", "item", "loot", "table", "chance",
+    "count", "max", "health", "hp", "speed", "aggr", "sight", "hear", "range", "radius", "pine", "med" }
+local function wanted(n)
+    n = n:lower()
+    for _, k in ipairs(DIFF_PAT) do if n:find(k, 1, true) then return true end end
+    return false
+end
+local function arrStr(v)
+    local n = nil
+    pcall(function() n = v:GetArrayNum() end)
+    if not n then return nil end
+    local parts = {}
+    pcall(function()
+        v:ForEach(function(idx, el)
+            if #parts < 40 then
+                local e = el
+                pcall(function() e = el:get() end)
+                parts[#parts + 1] = valStr(e)
+            end
+        end)
+    end)
+    return "[" .. n .. "] " .. table.concat(parts, ", ")
+end
+local function dumpDiff(obj, out, all)
+    local cls = nil
+    pcall(function() cls = obj:GetClass() end)
+    local guard = 0
+    while cls and valid(cls) and guard < 8 do
+        local cname = "?"
+        pcall(function() cname = cls:GetFullName() end)
+        if cname:find("/Game/", 1, true) then
+            out[#out + 1] = "  -- " .. cname
+            pcall(function()
+                cls:ForEachProperty(function(pr)
+                    local n = pr:GetFName():ToString()
+                    if all or wanted(n) then
+                        local v = "?"
+                        pcall(function() local x = obj[n]; v = arrStr(x) or valStr(x) end)
+                        out[#out + 1] = "    var " .. n .. " = " .. v
+                    end
+                end)
+            end)
+            pcall(function()
+                cls:ForEachFunction(function(f)
+                    local n = f:GetFName():ToString()
+                    if wanted(n) and not n:find("^BndEvt") then out[#out + 1] = "    fn " .. n end
+                end)
+            end)
+        end
+        local ok, sup = pcall(function() return cls:GetSuperStruct() end)
+        cls = ok and sup or nil
+        guard = guard + 1
+    end
+end
+
+local diffHooked = false
+local function hookDifficulty()
+    if diffHooked then return end
+    diffHooked = true
+    for _, fn in ipairs({ "HARDMODE", "easymode" }) do
+        for _, cls in ipairs({ "/Game/Variant_Horror/Blueprints/BP_HorrorCharacter.BP_HorrorCharacter_C",
+                               "/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter.BP_FirstPersonCharacter_C" }) do
+            local ok = pcall(function()
+                RegisterHook(cls .. ":" .. fn, function() log("Difficulty: game called " .. fn) end)
+            end)
+            if ok then log("Difficulty: hook " .. fn .. " on " .. cls:match("([^%.]+)$")) end
+        end
+    end
+end
+every(2000, function()
+    if P.labUnlocked and getPawn() then hookDifficulty() end
+end)
+
+scanDifficulty = function()
+    local out = {}
+    local function w(x) out[#out + 1] = x end
+    local gi = nil
+    pcall(function() gi = FindFirstOf("GI_GON_C") end)
+    w("== GI_Difficulty = " .. (valid(gi) and tostring(gi.GI_Difficulty) or "?") .. "   (time " .. string.format("%.0f", gameNow() or 0) .. " s)")
+    w("")
+    w("== ITEMS ON THE MAP (by class)")
+    local counts, total = {}, 0
+    for _, a in ipairs(FindAllOf("BP_ThrowableBase_C") or {}) do
+        if valid(a) then
+            local n = "?"
+            pcall(function() n = tostring(a:GetClass():GetFName():ToString()) end)
+            counts[n] = (counts[n] or 0) + 1
+            total = total + 1
+        end
+    end
+    local names = {}
+    for n in pairs(counts) do names[#names + 1] = n end
+    table.sort(names)
+    for _, n in ipairs(names) do w("  " .. n .. " x" .. counts[n]) end
+    w("  total: " .. total)
+    for _, extra in ipairs({ "BP_MedKit_C", "BP_Note_C", "BP_Pine_C" }) do
+        local l = FindAllOf(extra)
+        if l then w("  " .. extra .. " x" .. #l) end
+    end
+    w("")
+    local sps = FindAllOf("BP_ItemSpawner_C") or {}
+    w("== ITEM SPAWNERS: " .. #sps .. " (first 3, all variables)")
+    for i = 1, math.min(3, #sps) do
+        if valid(sps[i]) then w("  # " .. sps[i]:GetFullName()); dumpDiff(sps[i], out, true) end
+    end
+    w("")
+    local p = getPawn()
+    w("== PLAYER (filtered)")
+    if p then dumpDiff(p, out, false) end
+    w("")
+    local r = getRoku()
+    w("== ROKU (filtered)")
+    if r then
+        dumpDiff(r, out, false)
+        local c = aiCtrl(r)
+        if c then w("== ROKU CONTROLLER (filtered)"); dumpDiff(c, out, false) end
+    end
+    w("")
+    for _, cn in ipairs({ "BP_Director_C", "BP_RunTracker_C" }) do
+        local a = FindFirstOf(cn)
+        w("== " .. cn .. " (all)")
+        if valid(a) then dumpDiff(a, out, true) end
+        w("")
+    end
+    local gm = nil
+    pcall(function() gm = StaticFindObject("/Script/Engine.Default__GameplayStatics"):GetGameMode(getPawn()) end)
+    w("== GAME MODE (filtered)")
+    if valid(gm) then w("  " .. gm:GetFullName()); dumpDiff(gm, out, false) end
+    w("")
+    w("== GI_GON (all)")
+    if valid(gi) then dumpDiff(gi, out, true) end
+    local d = valid(gi) and tostring(gi.GI_Difficulty) or "x"
+    local path = ROOT .. "\\difficulty_scan_" .. d .. ".txt"
+    local fh = io.open(path, "w")
+    if not fh then return "Could not write the scan" end
+    fh:write(table.concat(out, "\n")); fh:close()
+    log("Lab: difficulty scan saved: " .. path)
+    return "Saved difficulty_scan_" .. d .. ".txt"
+end
+
 end)()
