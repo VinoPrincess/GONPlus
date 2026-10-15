@@ -81,7 +81,7 @@ local function recordKey()
     if R.base == "nightmare" then return "nightmare" .. (mk and ("/" .. mk) or "") end
     if R.base == "lovesick" then return "lovesick:" .. tostring(R.loveMin) .. (mk and ("/" .. mk) or "") end
     if R.base == "shy" then return "shy" .. (mk and ("/" .. mk) or "") end
-    return mk or "normal"
+    return mk or ("normal" .. (vanillaRecordSuffix and vanillaRecordSuffix(R.diff) or ""))
 end
 
 local function bestFor(key) return key and RECORDS[key] or nil end
@@ -181,6 +181,7 @@ local function startRun(mode, mutId)
     R.pines, R.splits = 0, {}
     R.result, R.finalTime = nil, nil
     R.chaos, R.cheated = nil, false
+    R.diff = gameDifficulty and gameDifficulty() or nil   -- для рекорда ванильной игры (normal@hard...)
     local p = getPawn()
     R.pines = p and num(p.pinecollected) or 0
 
@@ -239,6 +240,7 @@ local function newRun(pawn)
     end
     log("New run detected, opening chooser")
     openChooser()
+    if diffResume then diffResume() end   -- уровень перезапускался ради сложности: стартуем сами
 end
 
 ------------------------------------------------------------------------

@@ -39,7 +39,7 @@ local function comboKey(base, rokus, mutKey)
     if base == "nightmare" then return "nightmare" .. (mutKey and ("/" .. mutKey) or "") end
     if base == "lovesick" then return "lovesick:" .. tostring(P.selLoveMin) .. (mutKey and ("/" .. mutKey) or "") end
     if base == "shy" then return "shy" .. (mutKey and ("/" .. mutKey) or "") end
-    return mutKey or "normal"
+    return mutKey or ("normal" .. (vanillaSelSuffix and vanillaSelSuffix() or ""))
 end
 
 local function bestText(key, m)
@@ -72,6 +72,17 @@ end
 
 local SCREENS = {}
 
+-- старт выбранного забега (кнопка START; и после перезапуска уровня ради сложности)
+function startSelected()
+    if P.selMut == "random" then UI.screen = "random"; UI.sel = 1; UI.roll = nil
+    else
+        UI.close()
+        if P.selMut == "chaos" then startRun("chaos")
+        elseif MUTS[P.selMut] then startRun("pick", P.selMut)
+        else startRun("none") end
+    end
+end
+
 SCREENS.main = function()
     -- выбор мог стать неподходящим (мутатор удалён / несовместим с режимом)
     if P.selMut ~= "none" and P.selMut ~= "random" and P.selMut ~= "chaos" and not mutAllowed(P.selMut, P.selBase) then
@@ -87,13 +98,9 @@ SCREENS.main = function()
     items[#items + 1] = { label = "Start", extra = summary .. (bt and ("   " .. bt) or ""),
         desc = "Start the run: " .. summary .. ".",
         act = function()
-            if P.selMut == "random" then UI.screen = "random"; UI.sel = 1; UI.roll = nil
-            else
-                UI.close()
-                if P.selMut == "chaos" then startRun("chaos")
-                elseif MUTS[P.selMut] then startRun("pick", P.selMut)
-                else startRun("none") end
-            end
+            -- другая сложность игры (gamecfg.lua): уровень перезапустится и забег стартует сам
+            if diffGate and diffGate() then return end
+            startSelected()
         end }
     items[#items + 1] = { label = "Mode: " .. base.name, extra = "click left / right side to change",
         desc = base.desc, cycle = function(dir)
@@ -121,7 +128,8 @@ SCREENS.main = function()
             or (P.selMut == "random" and "Fate picks one mutator when you start. No rerolls.")
             or (MUTS[P.selMut] and MUTS[P.selMut].desc) or "No mutator.",
         act = function() UI.screen = "pick"; UI.sel = 1 end }
-    items[#items + 1] = { label = "Settings", desc = "Graphics and FPS, chaos timing, speedrun panel, bars.",
+    if gameMainItems then gameMainItems(items) end   -- наряд Року, сложность (gamecfg.lua)
+    items[#items + 1] = { label = "Settings", desc = "Graphics and FPS, quick start, mouse, chaos timing, speedrun panel, bars.",
         act = function() UI.screen = "settings"; UI.sel = 1 end }
     -- выход из игры сразу (раньше: забег -> пауза -> выйти -> выйти). Второй клик за 3 с — подтверждение.
     local armed = UI.quitArmed and os.clock() < UI.quitArmed
@@ -255,6 +263,7 @@ SCREENS.settings = function()
     items[1] = { label = "Graphics / FPS", extra = "open",
         desc = "Render scale, shadows, reflections, FPS limit and an FPS counter. For PCs where the game drops frames.",
         act = function() UI.screen = "graphics"; UI.sel = 1 end }
+    if gameSettingsItems then gameSettingsItems(items) end   -- быстрый старт, мышь (gamecfg.lua)
     for _, r in ipairs(SETTING_ROWS) do
       if not r.only or r.only() then
         local v = P[r.key]

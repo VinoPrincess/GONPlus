@@ -2,6 +2,15 @@
 
 ## Unreleased (1.1)
 
+- **The game's own settings in the GON+ window** — no need to visit the game's main menu any more:
+  - *Roku:* her outfit, right on the main screen. Changes on her at once and is saved for the game too
+    (same as its Customize menu). Locked outfits are skipped.
+  - *Difficulty* (Easy / Normal / Hard) for the plain game — Normal mode without a mutator. GON+ modes and mutators
+    always play on Normal; if the game was set to something else, START restarts the level once and the run begins by itself.
+    Records are kept apart for each difficulty.
+  - *Settings → Mouse sensitivity* — the game's own, saved for the game too.
+  - *Settings → Quick start* (on by default): launching the game skips its main menu and goes straight to the GON+ window.
+    Only once per launch — if you quit to the main menu yourself, it stays there.
 - **Quit game** at the bottom of the choice window: closes the game right away (click twice, so it can't happen by accident).
 - **Settings → Game pop-ups** (on / off): hides the game's pop-up hints — "+RUN+" when she chases you,
   "+ NOTE ACQUIRED + PAUSE TO READ +" and item names when you pick something up. They clash with the modes.

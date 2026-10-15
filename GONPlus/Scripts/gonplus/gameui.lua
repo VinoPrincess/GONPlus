@@ -346,6 +346,37 @@ scanDifficulty = function()
     for i = 1, math.min(3, #sps) do
         if valid(sps[i]) then w("  # " .. sps[i]:GetFullName()); dumpDiff(sps[i], out, true) end
     end
+    -- таблицы лута первого живого спавнера: поля структуры S_LootItem (имена с GUID — берём из описания структуры)
+    local fields = {}
+    pcall(function()
+        StaticFindObject("/Game/ITEMSPAWNING/S_LootItem.S_LootItem"):ForEachProperty(function(pr)
+            fields[#fields + 1] = pr:GetFName():ToString()
+        end)
+    end)
+    w("== LOOT TABLES (S_LootItem fields: " .. table.concat(fields, ", ") .. ")")
+    local sp1 = nil
+    for _, sp in ipairs(sps) do
+        if valid(sp) and not sp:GetFullName():find("DESTROYED_", 1, true) then sp1 = sp break end
+    end
+    sp1 = sp1 or sps[1]
+    if valid(sp1) and #fields > 0 then
+        for _, tn in ipairs({ "LootTable", "LootTable_1", "LootTable_3" }) do
+            w("  " .. tn .. ":")
+            pcall(function()
+                sp1[tn]:ForEach(function(i, el)
+                    local e = el
+                    pcall(function() e = el:get() end)
+                    local parts = {}
+                    for _, f in ipairs(fields) do
+                        local v = "?"
+                        pcall(function() v = valStr(e[f]) end)
+                        parts[#parts + 1] = (f:match("^([^_]+)") or f) .. "=" .. v
+                    end
+                    w("    " .. i .. ": " .. table.concat(parts, "  "))
+                end)
+            end)
+        end
+    end
     w("")
     local p = getPawn()
     w("== PLAYER (filtered)")

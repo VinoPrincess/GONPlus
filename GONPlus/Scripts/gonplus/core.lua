@@ -251,6 +251,8 @@ local DEFAULTS = {
     gfxFx         = 0,
     gfxFpsCap     = 0,
     gfxFpsShow    = false,    -- счётчик FPS слева сверху
+    gameDiff      = 0,        -- сложность "ванильной" игры (Normal без мутатора): 1-3, 0 = как в сохранении игры
+    quickStart    = true,     -- при запуске игры пропускать её главное меню (gamecfg.lua)
 }
 local P = deepcopy(DEFAULTS)
 local SETTINGS_PATH = ROOT .. "\\settings.txt"
