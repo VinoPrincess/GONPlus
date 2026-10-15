@@ -105,10 +105,19 @@ onForgetRefs(function() hidden, queue, templates = {}, {}, {} end)
 
 ------------------------------------------------------------------------
 -- Разведка главного меню игры (для будущего "сразу в игру" и настроек/скинов/ачивок в нашем меню).
--- Только с открытой лабораторией: когда игрок в главном меню (нет персонажа), один раз пишем
--- mainmenu_scan.txt — какие виджеты на экране, их функции (кнопки!) и переменные GameInstance.
+-- Только с открытой лабораторией: пока игрок в главном меню (нет персонажа), дописываем в
+-- mainmenu_scan.txt каждый новый экран (Options/Customize/Achievements), GameInstance и сохранения.
 ------------------------------------------------------------------------
-local menuScanned = false
+local menuScanned = {}         -- класс виджета -> уже записан
+local menuLines = nil
+local function valStr(v)
+    local s = tostring(v)
+    if type(v) == "userdata" then
+        pcall(function() s = "\"" .. v:ToString() .. "\"" end)          -- FString/FText/FName
+        if s == tostring(v) then pcall(function() s = v:GetFullName() end) end
+    end
+    return s
+end
 local function dumpFuncs(obj, out, withProps)
     local cls = nil
     pcall(function() cls = obj:GetClass() end)
@@ -132,7 +141,7 @@ local function dumpFuncs(obj, out, withProps)
                     cls:ForEachProperty(function(pr)
                         local n = pr:GetFName():ToString()
                         local v = "?"
-                        pcall(function() v = tostring(obj[n]) end)
+                        pcall(function() v = valStr(obj[n]) end)
                         out[#out + 1] = "    var " .. n .. " = " .. v
                     end)
                 end)
@@ -144,39 +153,58 @@ local function dumpFuncs(obj, out, withProps)
     end
 end
 
-every(3000, function()
-    if menuScanned or not P.labUnlocked or getPawn() then return end
+local function menuSave()
+    local fh = io.open(ROOT .. "\\mainmenu_scan.txt", "w")
+    if fh then fh:write(table.concat(menuLines, "\n")); fh:close() end
+end
+
+-- Пока игрок в главном меню, каждые 2 с смотрим, какие виджеты на экране.
+-- Каждый новый класс (Options, Customize, Achievements...) дописываем в файл один раз,
+-- плюс заново пишем GameInstance и все SaveGame-объекты (там скины/сложность/ачивки).
+every(2000, function()
+    if not P.labUnlocked or getPawn() then return end
     local pc = getPC(); if not pc then return end
+    local added = 0
     local out = {}
-    local lvl = "?"
-    pcall(function() lvl = StaticFindObject("/Script/Engine.Default__GameplayStatics"):GetCurrentLevelName(pc, true):ToString() end)
-    out[#out + 1] = "== Map: " .. tostring(lvl)
-    local found = 0
     for _, w in ipairs(FindAllOf("UserWidget") or {}) do
         if valid(w) then
-            local inView = false
-            pcall(function() inView = w:IsInViewport() == true end)
             local full = ""
             pcall(function() full = w:GetClass():GetFullName() end)
-            if inView and full:find("/Game/", 1, true) then
-                found = found + 1
-                out[#out + 1] = "== Widget on screen: " .. full
+            local vis = true
+            pcall(function() vis = w:IsVisible() == true end)
+            if full:find("/Game/", 1, true) and vis and not menuScanned[full] then
+                local inView = false
+                pcall(function() inView = w:IsInViewport() == true end)
+                menuScanned[full] = true
+                added = added + 1
+                out[#out + 1] = "== Widget" .. (inView and " (viewport)" or "") .. ": " .. full
                 dumpFuncs(w, out, true)
             end
         end
     end
-    if found == 0 then return end          -- меню ещё не построилось — подождём
+    if added == 0 then return end
+    if not menuLines then
+        menuLines = {}
+        local lvl = "?"
+        pcall(function() lvl = StaticFindObject("/Script/Engine.Default__GameplayStatics"):GetCurrentLevelName(pc, true):ToString() end)
+        menuLines[1] = "== Map: " .. tostring(lvl)
+    end
+    for _, l in ipairs(out) do menuLines[#menuLines + 1] = l end
+    menuLines[#menuLines + 1] = "== State after " .. added .. " new widget(s), t=" .. string.format("%.0f", os.clock())
     for _, gi in ipairs({ "GI_GON_C" }) do
         local g = nil
         pcall(function() g = FindFirstOf(gi) end)
-        out[#out + 1] = "== GameInstance " .. gi .. ": " .. (valid(g) and g:GetFullName() or "not found")
-        if valid(g) then dumpFuncs(g, out, true) end
+        menuLines[#menuLines + 1] = "== GameInstance " .. gi .. ": " .. (valid(g) and g:GetFullName() or "not found")
+        if valid(g) then dumpFuncs(g, menuLines, true) end
     end
-    menuScanned = true
-    local path = ROOT .. "\\mainmenu_scan.txt"
-    local fh = io.open(path, "w")
-    if fh then fh:write(table.concat(out, "\n")); fh:close() end
-    log("Main menu scan saved: mainmenu_scan.txt (" .. found .. " widgets, " .. #out .. " lines)")
+    for _, sg in ipairs(FindAllOf("SaveGame") or {}) do
+        if valid(sg) then
+            menuLines[#menuLines + 1] = "== SaveGame: " .. sg:GetFullName()
+            dumpFuncs(sg, menuLines, true)
+        end
+    end
+    menuSave()
+    log("Main menu scan: +" .. added .. " widgets -> mainmenu_scan.txt (" .. #menuLines .. " lines)")
 end)
 
 end)()
