@@ -226,7 +226,7 @@ local SETTING_ROWS = {
     { key = "barsStyle",     label = "Bars", choices = { { "corner", "corner" }, { "center", "center" }, { "term", "terminal" }, { "line", "lines" } },
       desc = "Corner: like the game. Center: wide bars at the bottom, stamina hides when full. Terminal: thin square bars with numbers. Lines: two thin lines at the bottom." },
     { key = "gamePopups",    label = "Game pop-ups", bool = true,
-      desc = "The game's own on-screen hints: RUN when she chases you, item names, 'open the pause menu to read'. Off hides them - they clash with the modes." },
+      desc = "The game's own pop-up hints: +RUN+ when she chases you, item names, NOTE ACQUIRED - PAUSE TO READ. Off hides them - they clash with the modes." },
     { key = "labUnlocked",   label = "Developer lab (F1)", bool = true, only = function() return P.labUnlocked end,
       desc = "Full control over the game for testing. Runs with lab cheats don't count for records. Off hides it (7 clicks on +GON+PLUS+ bring it back)." },
 }

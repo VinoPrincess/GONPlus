@@ -1,128 +1,41 @@
 ------------------------------------------------------------------------
 -- Всплывающие подсказки игры (Settings -> Game pop-ups).
--- Мешают режимам: "BEGI" при погоне, "откройте паузу, чтобы прочитать" у записок,
--- названия предметов при подборе. Прячем их прозрачностью (RenderOpacity = 0):
+-- Мешают режимам: "+RUN+" при погоне, "+ NOTE ACQUIRED + PAUSE TO READ +" у записок,
+-- названия предметов при подборе ("FLASHLIGHT", "JAR OF BIO SAMPLES").
+-- Разведка в игре 15.10.2026 показала: всё это — один виджет игры WB_ToolTip_C
+-- (/Game/Variant_Horror/Localization/WB_ToolTip, надпись ToolTip_Text_Block);
+-- на каждое сообщение игра создаёт новый. Прячем прозрачностью (RenderOpacity = 0):
 -- SetVisibility на чужих виджетах бывало роняло игру (см. заметки RokuMenu).
 --
--- Какие именно виджеты — узнаём в игре: с открытой лабораторией мод пишет в лог
--- каждую новую надпись игры: "Game text: <виджет>.<надпись> = '...'".
--- Сразу прячем экранные подсказки игры WST_* (из ui_scan: SHE KNOWS, LOOK AT ME...).
+-- Урок той же разведки: опрос ВСЕХ надписей (их ~1700) раз в секунду давал лаги и,
+-- видимо, вылет после перезапуска уровня (трогали надписи старого, умирающего уровня).
+-- Поэтому здесь — только точный класс подсказки, и только когда настройка выключена.
 ------------------------------------------------------------------------
 ; (function()
 
--- что прятать: класс виджета игры (начало имени) и, если нужно, только одну надпись в нём
-GAME_POPUPS = {
-    { widget = "WST_" },          -- экранные подсказки: SHE KNOWS, RUN, LOOK AT ME...
-}
+GAME_POPUPS = { "WB_ToolTip_C" }
 
-local seen = {}          -- для лога: уже записанные надписи
 local hidden = {}        -- адреса спрятанных, чтобы вернуть, когда настройку включат
-
--- "...UI_Horror_C_0.WidgetTree.TextBlock_12" -> "UI_Horror", "TextBlock_12"
-local function ownerOf(fullName)
-    local cls, name = fullName:match("([%w_]+)_C_%d+%.WidgetTree%.([%w_]+)$")
-    return cls, name
-end
-
-local function matches(cls, name)
-    for _, h in ipairs(GAME_POPUPS) do
-        if cls:sub(1, #h.widget) == h.widget and (not h.text or h.text == name) then return true end
-    end
-    return false
-end
-
-local function setOpacity(w, a)
-    pcall(function() w:SetRenderOpacity(a) end)
-end
 
 every(250, function()
     if not getPawn() then return end
     local hide = P.gamePopups == false
-    -- целые виджеты-подсказки (WST_*)
-    for _, w in ipairs(FindAllOf("UserWidget") or {}) do
-        if valid(w) then
-            local cls = ""
-            pcall(function() cls = w:GetClass():GetFName():ToString():gsub("_C$", "") end)
-            if cls ~= "" and matches(cls, nil) then
+    if not hide and not next(hidden) then return end
+    for _, cls in ipairs(GAME_POPUPS) do
+        for _, w in ipairs(FindAllOf(cls) or {}) do
+            if valid(w) then
                 local addr = w:GetAddress()
-                if hide then setOpacity(w, 0); hidden[addr] = "w"
-                elseif hidden[addr] then setOpacity(w, 1); hidden[addr] = nil end
-            end
-        end
-    end
-    -- отдельные надписи (если в списке есть text = "...")
-    local any = false
-    for _, h in ipairs(GAME_POPUPS) do if h.text then any = true end end
-    if any then
-        for _, t in ipairs(FindAllOf("TextBlock") or {}) do
-            if valid(t) then
-                local cls, name = ownerOf(t:GetFullName())
-                if cls and matches(cls, name) then
-                    local addr = t:GetAddress()
-                    if hide then setOpacity(t, 0); hidden[addr] = "t"
-                    elseif hidden[addr] then setOpacity(t, 1); hidden[addr] = nil end
+                if hide then
+                    pcall(function() if (num(w:GetRenderOpacity()) or 1) > 0 then w:SetRenderOpacity(0) end end)
+                    hidden[addr] = true
+                elseif hidden[addr] then
+                    pcall(function() w:SetRenderOpacity(1) end); hidden[addr] = nil
                 end
             end
         end
     end
+    if not hide then hidden = {} end
 end)
 onForgetRefs(function() hidden = {} end)
-
--- разведка (только с открытой лабораторией): какие надписи и виджеты показывает игра.
--- Первая версия молчала (в логе ни одной строки) — теперь пишем всё подряд и сводку,
--- чтобы понять, что не так: другой класс надписей, другое имя или пустой текст.
-local watch = { samples = 0, nextSummary = 0, widgets = {} }
-local TEXT_CLASSES = { "TextBlock", "RichTextBlock", "CommonTextBlock", "MultiLineEditableText", "EditableText" }
-every(1000, function()
-    if not P.labUnlocked or not getPawn() then return end
-    local total, withText, matched = 0, 0, 0
-    for _, tc in ipairs(TEXT_CLASSES) do
-        for _, t in ipairs(FindAllOf(tc) or {}) do
-            if valid(t) then
-                total = total + 1
-                local full = ""
-                pcall(function() full = t:GetFullName() end)
-                if watch.samples < 5 and full ~= "" then
-                    watch.samples = watch.samples + 1
-                    log("Game text sample name: " .. full)
-                end
-                local txt = nil
-                pcall(function() txt = t:GetText():ToString() end)
-                if type(txt) ~= "string" then pcall(function() txt = tostring(t.Text:ToString()) end) end
-                if type(txt) == "string" and txt:match("%S") then
-                    withText = withText + 1
-                    local cls, name = ownerOf(full)
-                    if cls then matched = matched + 1 end
-                    local where = cls and (cls .. "." .. name) or full:match("([^%.:]+%.[^%.:]+)$") or full
-                    local key = tc .. where .. "=" .. txt
-                    if not seen[key] then
-                        seen[key] = true
-                        local vis = "?"
-                        pcall(function() vis = tostring(t:IsVisible()) end)
-                        log("Game text: [" .. tc .. "] " .. where .. " = '" .. txt:gsub("[\r\n]+", " / ") .. "' (visible " .. vis .. ")")
-                    end
-                end
-            end
-        end
-    end
-    -- целые виджеты игры на экране (имена классов)
-    for _, w in ipairs(FindAllOf("UserWidget") or {}) do
-        if valid(w) then
-            local cls = ""
-            pcall(function() cls = w:GetClass():GetFName():ToString() end)
-            local inView = false
-            pcall(function() inView = w:IsInViewport() == true end)
-            if cls ~= "" and inView and not watch.widgets[cls] then
-                watch.widgets[cls] = true
-                log("Game widget on screen: " .. cls)
-            end
-        end
-    end
-    local g = os.clock()
-    if g >= watch.nextSummary then
-        watch.nextSummary = g + 30
-        log(string.format("Game text watch: %d text widgets, %d with text, %d matched", total, withText, matched))
-    end
-end)
 
 end)()
