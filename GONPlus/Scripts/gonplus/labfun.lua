@@ -199,11 +199,37 @@ local function karmaTick()
     end
 end
 
--- "не бьёт": удар-объём выключен (как в Lovesick), а атаки, которые хук поймал, прерываем
-local function harmlessTick()
-    for _, r in ipairs(allRokus()) do
-        pcall(function() r.AttackBox:SetCollisionEnabled(0) end)
+-- "не бьёт". Одного AttackBox мало (проверено в игре: била как обычно), поэтому:
+--   1) выключаем все удар- и захват-объёмы (AttackBox, crushbox, GH_* — руки, ноги, голова, грудь, таз);
+--   2) здоровье держим полным (если урон всё-таки прошёл другим путём);
+--   3) атаки, которые поймал хук PlayAnimMontage, прерываем.
+local HIT_PARTS = { "AttackBox", "crushbox", "GH_pelvis", "GH_chest", "GH_Head", "GH_leftarm", "GH_legL", "GH_legR", "GH_rightarm" }
+FUN.parts = {}      -- адрес Року -> { часть -> родное SetCollisionEnabled }
+onForgetRefs(function() FUN.parts = {} end)
+local function harmlessParts(r, off)
+    local addr = r:GetAddress()
+    FUN.parts[addr] = FUN.parts[addr] or {}
+    local saved = FUN.parts[addr]
+    for _, n in ipairs(HIT_PARTS) do
+        pcall(function()
+            local c = r[n]
+            if not valid(c) then return end
+            if off then
+                if saved[n] == nil then saved[n] = num(c:GetCollisionEnabled()) or 1 end
+                c:SetCollisionEnabled(0)
+                pcall(function() c:SetGenerateOverlapEvents(false) end)
+            elseif saved[n] ~= nil then
+                c:SetCollisionEnabled(saved[n])
+                pcall(function() c:SetGenerateOverlapEvents(true) end)
+            end
+        end)
     end
+    if not off then FUN.parts[addr] = nil end
+end
+local function harmlessTick()
+    for _, r in ipairs(allRokus()) do harmlessParts(r, true) end
+    local p = getPawn()
+    if p then pcall(function() if (num(p.health) or 1) < 1 then p.health = 1.0 end end) end
     for addr in pairs(FUN.stopMontage) do
         local r = rokuAt(addr)
         if r then pcall(function() r:StopAnimMontage(nil) end) end
@@ -624,9 +650,9 @@ LAB_EXTRA_TABS = {
                 pcall(function() r:SetPlayerDetected(false) end)
             end, "She forgot you")
         end),
-        toggle("harmless", "Can't hurt you", "Her hits don't land, and attack animations are cut short (experimental hook).",
+        toggle("harmless", "Can't hurt you", "Her hit and grab boxes are off, your health stays full, attack animations are cut short (hook). Check the log for 'attack animation hook'.",
             function() ensureAttackHook(); harmlessTick(); return "Harmless" end,
-            function() return rokusDo(function(r) r.AttackBox:SetCollisionEnabled(1) end, "Dangerous again") end),
+            function() return rokusDo(function(r) harmlessParts(r, false) end, "Dangerous again") end),
         toggle("karma", "Karma: spotted = she falls", "Every time a Roku notices you, she trips (4 s cooldown).",
             function() FUN.karmaLast = {}; return "Karma on" end, function() return "Karma off" end),
         action("Vision down / up", "The game's own VISION DOWN, then VISION UP after 5 s.", function()
