@@ -1,5 +1,6 @@
 -- Экраны окна выбора.
--- Забег = РЕЖИМ (правила: Normal / Pure stealth / Nightmare)
+-- Забег = РЕЖИМ (правила: Normal / Pure stealth / Reactor / SUTEGOMA / Lovesick / Bashful)
+-- (Nightmare с 1.1 — сложность ванильной игры, gamecfg.lua)
 --       + МУТАТОР (условия: none / один / random / chaos).
 -- Выбор запоминается: обычно просто жмёшь START.
 ------------------------------------------------------------------------
@@ -8,15 +9,30 @@ BASES = {
       desc = "The game as it is: collect the apples and get out." },
     { id = "stealth", name = "Pure stealth",
       desc = "Roku doesn't hunt you. If she SEES you - it's over. No hiding. Running and thrown items make noise." },
+    { id = "reactor", name = "Reactor",
+      desc = "The reactor is failing: get out before it blows. Three levels - the higher, the less time, the more blackouts and heat." },
+    { id = "sutegoma", name = "SUTEGOMA",
+      desc = "You are bleeding out: health slowly drains. Heal up from time to time - there are more medkits around." },
     { id = "lovesick", name = "Lovesick",
       desc = "Roku is drunk and very affectionate. Survive until she sobers up. Every hug makes you fall for her; full heart = you lose. No trash, no booze - only gifts to throw at her. Gifts and spanks cool her down." },
     { id = "shy", name = "Bashful",
       desc = "She can't see you, but she feels your gaze. She flickers in and out near you - ahead, behind, around the corner. Don't stare at her, don't come close. She never attacks." },
-    { id = "nightmare", name = "Nightmare",
-      desc = "Almost impossible. No HUD, lights out, one hit kills, no hiding spots, only a little trash and skulls to throw. She hears you run." },
 }
--- с Bashful не работают: вторая Року, беготня, когти (она не ходит и не бьёт)
-SHY_BLOCK = { twins = true, zoomies = true, razor = true }
+-- с Bashful не работают: вторая Року, беготня, когти, удары и укрытия (она не ходит и не бьёт)
+SHY_BLOCK = { twins = true, zoomies = true, razor = true, onehit = true, nohiding = true }
+-- режимы-обёртки над мутатором (1.1): Reactor — уровень реактора, SUTEGOMA — кровотечение
+REACTOR_NAMES = { "Failure", "Critical failure", "Meltdown" }
+function baseMutFor(base, lvl)
+    if base == "reactor" then return (REACTOR_LEVELS or {})[lvl or P.selReactor or 1] or "reactor" end
+    if base == "sutegoma" then return "sutegoma" end
+    return nil
+end
+-- старые настройки: Nightmare был режимом, Reactor/SUTEGOMA — мутаторами
+if P.selBase == "nightmare" then P.selBase = "normal"; P.selMut = "none"; P.gameDiff = 4 end
+for i, id in ipairs({ "reactor", "critical", "meltdown" }) do
+    if P.selMut == id then P.selBase, P.selMut, P.selReactor = "reactor", "none", i end
+end
+if P.selMut == "sutegoma" then P.selBase, P.selMut = "sutegoma", "none" end
 local function baseInfo(id)
     for i, b in ipairs(BASES) do if b.id == id then return b, i end end
     return BASES[1], 1
@@ -26,6 +42,9 @@ end
 local function mutAllowed(id, base)
     local m = MUTS[id]
     if not m then return false end
+    if m.modeOnly then return false end                  -- реактор, SUTEGOMA — теперь режимы
+    if base == "reactor" and (id == "zerohour" or id == "heat" or id == "darkness" or id == "blackouts") then return false end
+    if base == "sutegoma" and (id == "onehit" or id == "razor") then return false end
     if base == "stealth" and m.noStealth then return false end
     if base == "nightmare" and m.noNightmare then return false end
     if base == "lovesick" and not m.loveOk then return false end
@@ -33,13 +52,19 @@ local function mutAllowed(id, base)
     return true
 end
 
+MUT_OK = mutAllowed      -- для хаоса (run.lua)
+
 -- ключ рекорда для выбора (режим + мутатор)
 local function comboKey(base, rokus, mutKey)
+    -- Reactor / SUTEGOMA: ключи как у прежних мутаторов (mut:meltdown...), рекорды не теряются
+    local bm = baseMutFor(base)
+    if bm then return "mut:" .. bm .. (mutKey and ("/" .. mutKey) or "") end
     if base == "stealth" then return "stealth:" .. tostring(rokus) .. (mutKey and ("/" .. mutKey) or "") end
     if base == "nightmare" then return "nightmare" .. (mutKey and ("/" .. mutKey) or "") end
     if base == "lovesick" then return "lovesick:" .. tostring(P.selLoveMin) .. (mutKey and ("/" .. mutKey) or "") end
     if base == "shy" then return "shy" .. (mutKey and ("/" .. mutKey) or "") end
-    return mutKey or ("normal" .. (vanillaSelSuffix and vanillaSelSuffix() or ""))
+    if not mutKey and vanillaSelKey then return vanillaSelKey() end
+    return mutKey or "normal"
 end
 
 local function bestText(key, m)
@@ -93,8 +118,10 @@ SCREENS.main = function()
     local items = {}
     local mutKey = (P.selMut == "chaos" and "chaos") or (MUTS[P.selMut] and ("mut:" .. P.selMut)) or nil
     local summary = base.name .. (P.selBase == "stealth" and (" (" .. P.selRokus .. " Roku)") or "")
+        .. (P.selBase == "reactor" and (": " .. (REACTOR_NAMES[P.selReactor] or "")) or "")
         .. (P.selMut ~= "none" and ("  +  " .. selMutName()) or "")
-    local bt = (P.selMut ~= "random") and bestText(comboKey(P.selBase, P.selRokus, mutKey), MUTS[P.selMut]) or nil
+    local bt = (P.selMut ~= "random") and bestText(comboKey(P.selBase, P.selRokus, mutKey),
+        MUTS[P.selMut] or MUTS[baseMutFor(P.selBase) or ""]) or nil
     items[#items + 1] = { label = "Start", extra = summary .. (bt and ("   " .. bt) or ""),
         desc = "Start the run: " .. summary .. ".",
         act = function()
@@ -117,6 +144,13 @@ SCREENS.main = function()
                 for k, v in ipairs(opts) do if v == P.selLoveMin then i = k end end
                 P.selLoveMin = opts[(i - 1 + dir) % #opts + 1]; saveSettings()
             end }
+    end
+    if P.selBase == "reactor" then
+        local lv = P.selReactor or 1
+        local id = baseMutFor("reactor", lv)
+        items[#items + 1] = { label = "Level: " .. (REACTOR_NAMES[lv] or "?"), extra = "how bad it is",
+            desc = MUTS[id] and MUTS[id].desc or "",
+            cycle = function(dir) P.selReactor = ((P.selReactor or 1) - 1 + dir) % 3 + 1; saveSettings() end }
     end
     if P.selBase == "stealth" then
         items[#items + 1] = { label = "Rokus: " .. P.selRokus, extra = "1 is the default; more is harder",
@@ -163,32 +197,8 @@ SCREENS.pick = function()
             desc = string.format("A random mutator every %d s. Warning %d s before each change.", P.chaosInterval, P.chaosWarn),
             act = function() choose("chaos") end }
     end
-    -- три уровня реактора — одна строка: стрелки / края кнопки меняют уровень, Enter / середина — выбрать
-    local lv = REACTOR_LEVELS or {}
-    local isLv = {}
-    for i, id in ipairs(lv) do isLv[id] = i end
-    if UI.reactorFor ~= P.selMut then                 -- уровень по умолчанию = уже выбранный
-        UI.reactorFor = P.selMut
-        if isLv[P.selMut] then UI.reactorLvl = isLv[P.selMut] end
-    end
-    UI.reactorLvl = UI.reactorLvl or 1
-    local reactorShown = false
     for _, id in ipairs(MUT_ORDER) do
-        if isLv[id] then
-            if not reactorShown and MUTS[lv[UI.reactorLvl]] then
-                reactorShown = true
-                local cur = lv[UI.reactorLvl]
-                local ok = mutAllowed(cur, P.selBase)
-                local short = ({ reactor = "Failure", critical = "Critical failure", meltdown = "Meltdown" })[cur] or MUTS[cur].name
-                local bt = bestText(comboKey(P.selBase, P.selRokus, "mut:" .. cur), MUTS[cur])
-                if not ok then bt = "not with " .. baseInfo(P.selBase).name end
-                items[#items + 1] = { label = "Reactor: " .. short,
-                    extra = "< level " .. UI.reactorLvl .. "/" .. #lv .. " >" .. (bt and ("    " .. bt) or ""),
-                    desc = MUTS[cur].desc,
-                    cycle = function(dir) UI.reactorLvl = (UI.reactorLvl - 1 + dir) % #lv + 1 end,
-                    act = function() if ok then choose(cur) else showBanner("+ NOT WITH THIS MODE +", 2) end end }
-            end
-        else
+        if not MUTS[id].modeOnly then
             local ok = mutAllowed(id, P.selBase)
             items[#items + 1] = { label = mutLabel(id), desc = MUTS[id].desc,
                 act = function() if ok then choose(id) else showBanner("+ NOT WITH THIS MODE +", 2) end end }

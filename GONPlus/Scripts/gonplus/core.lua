@@ -240,6 +240,7 @@ local DEFAULTS = {
     selRokus      = 1,        -- Року в Pure stealth
     selMut        = "none",   -- none / random / chaos / id мутатора
     selLoveMin    = 8,        -- минут в Lovesick
+    selReactor    = 1,        -- уровень режима Reactor: 1 Failure / 2 Critical / 3 Meltdown
     labUnlocked   = false,    -- лаборатория открыта секретными кликами
     -- графика (Settings -> Graphics): 0 = как у игры, иначе номер варианта (graphics.lua)
     gfxRes        = 0,

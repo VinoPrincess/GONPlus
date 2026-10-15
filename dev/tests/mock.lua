@@ -255,8 +255,11 @@ function SEES(on) ROKU.bPlayerInVisionBox, ROKU.bLineTraceHitPlayer = on, on end
 
 -- выбрать режим в окне выбора: "NORMAL", "PURE STEALTH", "LOVESICK", "NIGHTMARE"
 function setMode(name)
-    goto_("MODE: NORMAL")                         -- выбранная строка рисуется "+ ... +"
-    for _ = 1, 6 do
+    for _ = 1, 40 do                              -- выбранная строка рисуется "+ ... +"
+        if hasText("^%+ MODE: .* %+$") then break end
+        key("DOWN_ARROW")
+    end
+    for _ = 1, 8 do
         if has("+ MODE: " .. name .. " +") then return true end
         key("RIGHT_ARROW")
     end

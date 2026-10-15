@@ -716,8 +716,21 @@ local function buildUI()
     -- свои полоски здоровья и выносливости (на месте родных, в их стиле)
     UI.bars = buildBars(tree, canvas)
 
-    -- затемнение экрана и надпись поимки (поверх всего)
     local imgCls = StaticFindObject("/Script/UMG.Image")
+    -- полная тьма на миг (мутатор Blackouts): поверх всего, кроме экранов поражения
+    do
+        local b = StaticConstructObject(imgCls, tree)
+        b:SetColorAndOpacity({ R = 0, G = 0, B = 0, A = 0 })
+        local bs = canvas:AddChildToCanvas(b)
+        bs:SetAnchors({ Minimum = { X = 0.5, Y = 0.5 }, Maximum = { X = 0.5, Y = 0.5 } })
+        bs:SetAlignment({ X = 0.5, Y = 0.5 })
+        bs:SetPosition({ X = 0, Y = 0 })
+        bs:SetSize({ X = 12000, Y = 12000 })
+        b:SetVisibility(VIS_HIDE)
+        UI.blind = b
+    end
+
+    -- затемнение экрана и надпись поимки (поверх всего)
     local veil = StaticConstructObject(imgCls, tree)
     veil:SetColorAndOpacity({ R = 0, G = 0, B = 0, A = 0 })
     local vs = canvas:AddChildToCanvas(veil)

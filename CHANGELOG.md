@@ -2,6 +2,15 @@
 
 ## Unreleased (1.1)
 
+- **Modes and mutators reorganised.** A mode changes the rules as a whole; a mutator changes one thing.
+  - **Reactor** is now a mode (Mode: Reactor, then pick the level: Failure / Critical failure / Meltdown).
+    Records are kept — they're the same as before.
+  - **SUTEGOMA** is now a mode too (records kept).
+  - **Nightmare** is now the fourth difficulty of the plain game: Normal mode, no mutator, Difficulty: Nightmare
+    (needs Hard unlocked in the game). Records kept.
+  - **New mutators** — they work on their own and in Chaos: **Darkness** (lights out), **No HUD**, **No Hiding**,
+    **One Hit**, **Heat** (stamina comes back twice as slowly). And **Blackouts** — every 35–60 s the screen flickers
+    and goes completely black for a few seconds, like your eyes can't adjust (not in Chaos).
 - **Run intros:** the mode / mutator name now comes with a short line under it that tells what you're in for
   ("+ BASHFUL +" — *Don't make her blush.*; "+ NIGHTMARE +" — *Lights out. One hit. Nowhere to hide. Good luck.*).
   Mode first, then the mutator. Chaos shows the line of every new mutator. Replaces the old start banners.

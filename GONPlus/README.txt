@@ -21,27 +21,36 @@ When updating, replace the Scripts folder and keep those two files.
 
 MODES
 -----
-Normal       The game as it is: collect the apples and get out.
+Normal       The game as it is: collect the apples and get out. Without a
+             mutator you pick the difficulty: Easy / Normal / Hard / Nightmare
+             (Hard + no HUD, real darkness, one hit kills, no hiding spots,
+             only a little trash and skulls to throw, she hears you run).
 Pure Stealth Roku doesn't hunt you. If she SEES you - it's over. No hiding.
              Running and thrown items make noise. 1 to 4 Rokus.
-Nightmare    Almost impossible. No HUD, real darkness, one hit kills, no hiding
-             spots, only a little trash and skulls to throw. She hears you run.
+Reactor      Countdown to the blast. Three levels:
+               Failure (30 min)  - flickering lights, red alarm at the end
+               Critical failure (20 min) - power failures plunge the
+                                   complex into darkness for seconds
+               Meltdown (17 min) - red from the start, longer blackouts,
+                                   the heat slows stamina recovery, and in
+                                   the last 3 minutes Roku gets faster
+SUTEGOMA     You are bleeding out: health slowly drains. More medkits around.
 Lovesick     Roku is drunk and very affectionate. Survive the timer (4-12 min).
              Every hug makes you fall for her; a full heart means you lose.
              Throw gifts at her (or spank her) to cool her down.
+Bashful      She feels your gaze. Don't stare at her, don't come close.
 
 
 MUTATORS (one per run)
 ----------------------
-Reactor           Countdown to the blast. Three levels:
-                    Failure (30 min)  - flickering lights, red alarm at the end
-                    Critical failure (20 min) - power failures plunge the
-                                        complex into darkness for seconds
-                    Meltdown (17 min) - red from the start, longer blackouts,
-                                        the heat slows stamina recovery, and in
-                                        the last 3 minutes Roku gets faster
+Zero Hour         One minute on the clock; every apple adds 20 seconds.
+Darkness          The lights are out. Your flashlight is all you've got.
+Blackouts         Now and then you see absolutely nothing for a few seconds.
+No HUD            No bars, no counter, no crosshair.
+No Hiding         The hiding spots don't work.
+One Hit           Her first hit is the last one.
+Heat              Stamina comes back twice as slowly.
 Slippery Hands    The item you hold slips out of your hands now and then.
-SUTEGOMA          You are bleeding out. More medkits around.
 Twins             A second Roku roams the map.
 No Food           No apples, carrots, drinks or coffee - only trash to throw.
 Zoomies           Roku runs everywhere from the very start.

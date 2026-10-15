@@ -81,6 +81,7 @@ local function recordKey()
     if R.base == "nightmare" then return "nightmare" .. (mk and ("/" .. mk) or "") end
     if R.base == "lovesick" then return "lovesick:" .. tostring(R.loveMin) .. (mk and ("/" .. mk) or "") end
     if R.base == "shy" then return "shy" .. (mk and ("/" .. mk) or "") end
+    if R.baseMut then return "mut:" .. R.baseMut .. (mk and ("/" .. mk) or "") end   -- Reactor / SUTEGOMA: прежние ключи
     return mk or ("normal" .. (vanillaRecordSuffix and vanillaRecordSuffix(R.diff) or ""))
 end
 
@@ -92,9 +93,14 @@ function runLabel()
     if R.base == "stealth" then parts[#parts + 1] = "PURE STEALTH: " .. tostring(R.rokus) .. " ROKU"
     elseif R.base == "nightmare" then parts[#parts + 1] = "NIGHTMARE"
     elseif R.base == "lovesick" then parts[#parts + 1] = "LOVESICK"
-    elseif R.base == "shy" then parts[#parts + 1] = "BASHFUL" end
-    if R.mode == "chaos" then parts[#parts + 1] = "CHAOS: " .. activeNames():upper()
-    elseif R.mode == "pick" or R.mode == "random" then parts[#parts + 1] = activeNames():upper() end
+    elseif R.base == "shy" then parts[#parts + 1] = "BASHFUL"
+    elseif R.base == "reactor" then parts[#parts + 1] = "REACTOR: " .. ((REACTOR_NAMES or {})[R.reactorLvl or 1] or ""):upper()
+    elseif R.base == "sutegoma" then parts[#parts + 1] = "SUTEGOMA" end
+    if R.mode == "chaos" then
+        local c = R.chaos and R.chaos.current and MUTS[R.chaos.current]
+        parts[#parts + 1] = "CHAOS: " .. (c and c.name:upper() or "NONE")
+    elseif (R.mode == "pick" or R.mode == "random") and R.mutId and MUTS[R.mutId] then
+        parts[#parts + 1] = MUTS[R.mutId].name:upper() end
     if #parts == 0 then
         if not R.base then return "" end
         parts[1] = "NORMAL RUN"
@@ -150,6 +156,7 @@ local function chaosPick()
         local m = MUTS[id]
         local ok = not (R.base == "stealth" and m.noStealth) and not (R.base == "nightmare" and m.noNightmare)
             and not (R.base == "shy" and SHY_BLOCK and SHY_BLOCK[id])
+            and (not MUT_OK or MUT_OK(id, R.base))
         if m.chaos ~= false and id ~= cur and ok then pool[#pool + 1] = id end
     end
     if #pool == 0 then return cur end
@@ -199,6 +206,12 @@ TAGLINE = {
     nofood    = "No snacks for her today. Find another way.",
     zoomies   = "She's got the zoomies. Sprint, rest, sprint again.",
     razor     = "Sharper claws. Every hit hurts more.",
+    darkness  = "The lights are out. Your flashlight is all you've got.",
+    nohud     = "No bars. No numbers. Trust your gut.",
+    nohiding  = "The hiding spots are closed. Keep moving.",
+    onehit    = "Her first hit is the last one.",
+    heat      = "It's hot in here. Catching your breath takes twice as long.",
+    blackouts = "Light. Dark. Light. Your eyes won't keep up.",
 }
 
 -- показать по очереди: { {title, sub, col}, ... }
@@ -225,6 +238,11 @@ local function startRun(mode, mutId)
     R.result, R.finalTime = nil, nil
     R.chaos, R.cheated = nil, false
     R.diff = gameDifficulty and gameDifficulty() or nil   -- для рекорда ванильной игры (normal@hard...)
+    -- Nightmare — 4-я сложность ванильной игры: внутри забега это по-прежнему R.base = "nightmare"
+    if R.base == "normal" and mode == "none" and vanillaNightmare and vanillaNightmare() then R.base = "nightmare" end
+    -- Reactor / SUTEGOMA — режимы поверх своего мутатора
+    R.reactorLvl = P.selReactor or 1
+    R.baseMut = baseMutFor and baseMutFor(R.base, R.reactorLvl) or nil
     local p = getPawn()
     R.pines = p and num(p.pinecollected) or 0
 
@@ -245,6 +263,9 @@ local function startRun(mode, mutId)
     elseif R.base == "shy" then
         shows[#shows + 1] = { "+ BASHFUL +", TAGLINE.shy, MODE_COLOR.shy }
         if shyStart then shyStart() end
+    elseif R.baseMut then
+        enableMut(R.baseMut)
+        shows[#shows + 1] = mutIntro(R.baseMut)
     end
     -- мутатор (условия)
     if mode == "pick" or mode == "random" then
@@ -271,7 +292,7 @@ local function newRun(pawn)
     R.pawnAddr = pawn:GetAddress()
     R.held, R.heldAt = nil, nil
     R.phase = "choosing"
-    R.mode, R.mutId, R.t0, R.chaos, R.base = nil, nil, nil, nil, nil
+    R.mode, R.mutId, R.t0, R.chaos, R.base, R.baseMut = nil, nil, nil, nil, nil, nil
     R.pines, R.splits, R.finalTime, R.result = 0, {}, nil, nil
     R.banner, R.lastCountdown = nil, nil
     if stealthStop then stealthStop("new run") end

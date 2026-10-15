@@ -2,7 +2,7 @@
 ------------------------------------------------------------------------
 local function updateHud()
     if not valid(UI.hud) then return end
-    local show = P.hud and (R.phase == "running" or R.phase == "over") and R.base ~= "nightmare"
+    local show = P.hud and (R.phase == "running" or R.phase == "over") and not hudHidden()
     UI.hud:SetVisibility(show and VIS_SHOW or VIS_HIDE)
     if not show then return end
     local L = UI.hudLines
@@ -120,7 +120,7 @@ local function updateHud()
     end
 
     local b = bestFor(recordKey())
-    local cdm = R.mutId and MUTS[R.mutId]
+    local cdm = (R.baseMut and MUTS[R.baseMut]) or (R.mutId and MUTS[R.mutId])
     if not (cdm and cdm.countdown) then cdm = nil end
     if b and cdm and cdm.limit then
         if b.win then setText(L.best, string.format("best  %s left", fmtTime(cdm.limit - b.time, true)))
@@ -161,7 +161,8 @@ every(250, function()
     if ev.death and R.phase == "running" then
         local lose = nil
         if R.mode == "chaos" then lose = LOSE and LOSE.chaos
-        elseif R.mutId and MUTS[R.mutId] then lose = MUTS[R.mutId].lose
+        elseif R.mutId and MUTS[R.mutId] and MUTS[R.mutId].lose then lose = MUTS[R.mutId].lose
+        elseif R.baseMut and MUTS[R.baseMut] then lose = MUTS[R.baseMut].lose
         elseif R.base == "nightmare" then lose = LOSE and LOSE.nightmare end
         endRun("dead")
         if lose and defeat and not UI.defeatOn then
@@ -235,6 +236,8 @@ MODE_COLOR = {
     lovesick  = { R = 1.0, G = 0.4, B = 0.7 },
     shy       = { R = 1.0, G = 0.6, B = 0.8 },
     chaos     = { R = 0.7, G = 0.45, B = 1.0 },
+    reactor   = { R = 1.0, G = 0.45, B = 0.15 },
+    sutegoma  = { R = 0.95, G = 0.12, B = 0.18 },
 }
 MUT_COLOR = {
     reactor  = { R = 1.0, G = 0.45, B = 0.15 }, critical = { R = 1.0, G = 0.45, B = 0.15 }, meltdown = { R = 1.0, G = 0.45, B = 0.15 },
@@ -245,7 +248,18 @@ MUT_COLOR = {
     nofood   = { R = 1.0, G = 0.78, B = 0.3 },
     zoomies  = { R = 0.3, G = 1.0, B = 0.6 },
     razor    = { R = 1.0, G = 0.3, B = 0.3 },
+    darkness = { R = 0.6, G = 0.6, B = 0.75 },
+    nohud    = { R = 0.85, G = 0.85, B = 0.85 },
+    nohiding = { R = 0.9, G = 0.7, B = 0.45 },
+    onehit   = { R = 1.0, G = 0.2, B = 0.35 },
+    heat     = { R = 1.0, G = 0.55, B = 0.2 },
+    blackouts = { R = 0.75, G = 0.75, B = 1.0 },
 }
+-- интерфейс спрятан: сложность Nightmare или мутатор No HUD
+function hudHidden()
+    if R.phase == "none" then return false end
+    return R.base == "nightmare" or (ACTIVE.nohud == true and R.phase == "running")
+end
 function runColor()
     if R.base and MODE_COLOR[R.base] then return MODE_COLOR[R.base] end
     if R.mode == "chaos" then return MODE_COLOR.chaos end
@@ -319,7 +333,7 @@ local function updateBars(dt)
     local pawn = getPawn()
     -- пока открыто окно выбора — прячем (игра на паузе, а терминал-панель стоит там же, где полоски)
     local menuOpen = UI.open and UI.kind ~= "lab"
-    local show = P.ownBars and pawn ~= nil and R.phase ~= "none" and R.base ~= "nightmare" and not menuOpen
+    local show = P.ownBars and pawn ~= nil and R.phase ~= "none" and not hudHidden() and not menuOpen
     local term = show and P.barsStyle == "term"
     for _, k in ipairs({ "hp", "st" }) do
         for _, part in ipairs({ "frame", "trail", "fill" }) do
@@ -414,7 +428,7 @@ end)
 every(250, function()
     local pawn = getPawn(); if not pawn then GAMEUI.bars, GAMEUI.count, GAMEUI.orig = nil, nil, {} return end
     gameHudParts(pawn)
-    local night = R.base == "nightmare" and R.phase ~= "none"
+    local night = hudHidden()
     setGamePart("bars", P.ownBars or night)
     setGamePart("count", P.hud or night)
     -- прицел и таймер маски трогаем только в кошмаре (таймер маски игра показывает сама)

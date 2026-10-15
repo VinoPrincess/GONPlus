@@ -114,11 +114,17 @@ WIN = {
     nofood    = { title = "+ TRASH HERO +", sub = "No treats. No problem." },
     zoomies   = { title = "+ OUTRAN HER +", sub = "She was fast. You were faster." },
     razor     = { title = "+ UNSCRATCHED +", sub = "Those claws never found you." },
+    darkness  = { title = "+ NIGHT VISION +", sub = "You found your way without the lights." },
+    nohud     = { title = "+ BY FEEL +", sub = "No numbers, no bars. Just instinct." },
+    nohiding  = { title = "+ NEVER HID +", sub = "Nowhere to hide - and you didn't need to." },
+    onehit    = { title = "+ UNTOUCHED +", sub = "One hit would have done it. It never came." },
+    heat      = { title = "+ COOL HEAD +", sub = "The heat got to everyone but you." },
+    blackouts = { title = "+ EYES ADJUSTED +", sub = "Every time it went black, you kept going." },
 }
 function winScreen()
     if R.base and R.base ~= "normal" and WIN[R.base] then return WIN[R.base] end
     if R.mode == "chaos" then return WIN.chaos end
-    local m = R.mutId and MUTS[R.mutId]
+    local m = (R.baseMut and MUTS[R.baseMut]) or (R.mutId and MUTS[R.mutId])
     if m and m.shortClock then return WIN.zerohour end
     if m and m.countdown then
         local left = R.lastCountdown or 0

@@ -28,7 +28,9 @@ local OUTFITS = {
     { row = "Cowmeat",    name = "Cowmeat",    flag = "U_SkinA1" },
     { row = "Dark",       name = "Dark",       flag = "U_SkinA2" },
 }
-local DIFFS = { { name = "Easy", flag = "U_easymode" }, { name = "Normal" }, { name = "Hard", flag = "U_hardmode" } }
+-- 4-я — Nightmare (с 1.1, решение игрока): сложность игры Hard + правила кошмара GON+ (nightmare.lua)
+local DIFFS = { { name = "Easy", flag = "U_easymode" }, { name = "Normal" }, { name = "Hard", flag = "U_hardmode" },
+                { name = "Nightmare", flag = "U_hardmode", game = 3 } }
 
 ------------------------------------------------------------------------
 -- сохранения игры
@@ -160,7 +162,7 @@ local function isVanilla() return P.selBase == "normal" and (P.selMut == "none" 
 
 -- выбор игрока для ванильной игры; 0 = ещё не выбирал -> берём из сохранения игры
 local function vanillaDiff()
-    if (P.gameDiff or 0) < 1 or P.gameDiff > 3 then
+    if (P.gameDiff or 0) < 1 or P.gameDiff > #DIFFS then
         local d = nil
         local sg = progress()
         if sg then pcall(function() d = num(sg.Difficulty) end) end
@@ -170,7 +172,21 @@ local function vanillaDiff()
     end
     return P.gameDiff
 end
-local function wantedDiff() return isVanilla() and vanillaDiff() or 2 end
+-- сложность самой игры (GI_Difficulty), которую надо выставить
+local function wantedDiff()
+    if not isVanilla() then return 2 end
+    local d = vanillaDiff()
+    return DIFFS[d].game or d
+end
+-- ванильная игра на Nightmare (run.lua превращает её в R.base = "nightmare")
+function vanillaNightmare() return isVanilla() and vanillaDiff() == 4 end
+-- ключ рекорда выбранной ванильной игры: normal / normal@easy / normal@hard / nightmare (как раньше)
+function vanillaSelKey()
+    if not isVanilla() then return "normal" end
+    local d = vanillaDiff()
+    if d == 4 then return "nightmare" end
+    return "normal" .. (d == 1 and "@easy" or d == 3 and "@hard" or "")
+end
 
 local DIFF = { pending = nil, last = nil }
 
@@ -265,21 +281,25 @@ function gameMainItems(items)
     if isVanilla() then
         local d = vanillaDiff()
         local cur = gameDifficulty()
+        local gd = DIFFS[d].game or d
         items[#items + 1] = { label = "Difficulty: " .. DIFFS[d].name,
-            extra = (cur and cur ~= d) and "the level restarts on START" or "only for Normal without mutators",
-            desc = "Easy: lots of items. Hard: fewer items, no medkits from shelves, less health, Roku stays closer. "
-                .. "Records are kept apart for each difficulty. GON+ modes and mutators always play on Normal.",
+            extra = (cur and cur ~= gd) and "the level restarts on START" or "only for Normal without mutators",
+            desc = d == 4 and "Nightmare: Hard, plus lights out, no HUD, one hit kills, no hiding spots, only a little trash "
+                    .. "and skulls to throw, and she hears you run. Almost impossible."
+                or ("Easy: lots of items. Hard: fewer items, no medkits from shelves, less health, Roku stays closer. "
+                .. "Nightmare: Hard and much worse. Records are kept apart for each difficulty. GON+ modes and mutators always play on Normal."),
             cycle = function(dir)
                 local i = vanillaDiff()
-                for _ = 1, 3 do
-                    i = (i - 1 + dir) % 3 + 1
+                for _ = 1, #DIFFS do
+                    i = (i - 1 + dir) % #DIFFS + 1
                     if unlocked(DIFFS[i]) then break end
                 end
                 P.gameDiff = i
                 saveSettings()
+                -- в сохранение игры — только её собственные сложности (Nightmare там = Hard)
                 local sg = progress()
                 if sg then
-                    pcall(function() sg.Difficulty = i end)
+                    pcall(function() sg.Difficulty = DIFFS[i].game or i end)
                     sgSave(sg, SLOT_PROGRESS)
                 end
             end }

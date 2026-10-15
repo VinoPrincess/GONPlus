@@ -308,6 +308,16 @@ function darkPreset(on, who)
     end
 end
 
+-- лампы уровня с владельцами (Nightmare, мутатор Darkness): гаснут, пока держит хоть один
+DARK.lampUsers = {}
+function darkLamps(on, who)
+    DARK.lampUsers[who or "?"] = on or nil
+    local want = next(DARK.lampUsers) ~= nil
+    if want and not darkIsOn("lamps") then return darkSet("lamps", true, darkLampArg()) end
+    if not want and darkIsOn("lamps") then return darkSet("lamps", false) end
+    return "lamps unchanged"
+end
+
 function darkIsOn(name) return DARK.active[name] ~= nil end
 function darkArg(name) local st = DARK.active[name]; return st and st.arg end
 function darkAllOff()
@@ -321,7 +331,7 @@ every(500, function()
     local addr = p and p:GetAddress() or nil
     if addr ~= DARK.pawn then
         log("Dark: new character - restoring")
-        DARK.users = {}
+        DARK.users, DARK.lampUsers = {}, {}
         darkAllOff()
     end
 end)

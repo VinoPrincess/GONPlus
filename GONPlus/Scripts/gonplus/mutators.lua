@@ -172,7 +172,7 @@ end
 local function reactor(id, name, desc)
     local L = LEVEL[id]
     mutator {
-        id = id, name = name, tags = { "timer" }, chaos = false, desc = desc, reactor = true,
+        id = id, name = name, tags = { "timer" }, chaos = false, desc = desc, reactor = true, modeOnly = true,
         limit = L.minutes * 60,
         countdown = function(s) return s.limit - ((gameNow() or 0) - s.t0) end,
         on = function(s)
@@ -388,7 +388,7 @@ local MEDKIT = "/Game/INTERACTION/BP_Medikit.BP_Medikit_C"
 local BLEED_PER_SEC = 1 / 300       -- от полного здоровья до нуля за 5 минут
 
 mutator {
-    id = "sutegoma", name = "SUTEGOMA", tags = { "health" }, noNightmare = true,
+    id = "sutegoma", name = "SUTEGOMA", tags = { "health" }, noNightmare = true, modeOnly = true,
     desc = "You are bleeding out: health slowly drains. Heal up from time to time - there are more medkits around.",
     on = function(s)
         s.medkits = 0
@@ -677,6 +677,116 @@ mutator {
     end,
 }
 
+------------------------------------------------------------------------
+-- Мутации 1.1 (решение игрока 15.10.2026): бывшие части Nightmare и Reactor — по одной,
+-- чтобы играться и отдельно, и в Хаосе. Blackouts — периодическая, в Хаос не идёт.
+------------------------------------------------------------------------
+mutator {
+    id = "darkness", name = "Darkness", tags = { "light" }, loveOk = true,
+    desc = "The lights are out. Your flashlight is all you've got.",
+    on = function(s)
+        darkLamps(true, "darkness")
+        darkPreset(true, "darkness")
+    end,
+    off = function(s)
+        darkLamps(false, "darkness")
+        darkPreset(false, "darkness")
+    end,
+}
+
+mutator {
+    id = "nohud", name = "No HUD", tags = { "hud" }, loveOk = true,
+    desc = "No bars, no counter, no crosshair. Feel your way through.",
+    -- прячет hud.lua (hudHidden), здесь делать нечего
+}
+
+mutator {
+    id = "nohiding", name = "No Hiding", tags = { "hiding" }, noStealth = true,
+    desc = "The hiding spots don't work. Keep moving.",
+    on = function(s) setHiders(true); s.next = (gameNow() or 0) + 3 end,
+    tick = function(s)
+        local g = gameNow() or 0
+        if g >= (s.next or 0) then s.next = g + 3; setHiders(true) end
+    end,
+    off = function(s) setHiders(false) end,
+}
+
+mutator {
+    id = "onehit", name = "One Hit", tags = { "damage" }, noStealth = true,
+    desc = "Her first hit is the last one.",
+    on = function(s) s.last = nil end,
+    tick = function(s)
+        local p = getPawn(); if not p then return end
+        local hp = num(p.health); if not hp then return end
+        local g = gameNow() or 0
+        if R.graceUntil and g < R.graceUntil then s.last = hp return end   -- хаос: пара секунд без урона
+        if s.last and hp < s.last - 0.02 and hp > 0.001 and not s.dead then
+            s.dead = true
+            log("One Hit: hit taken, that's it")
+            deathScene({ title = "+ ONE HIT +", sub = "That's all it took.", veil = { 0.1, 0.0, 0.03 }, color = GAME.warn,
+                fadeIn = 0.6, hold = 3.5, result = "dead" })
+        end
+        s.last = hp
+    end,
+    off = function(s) s.last = nil end,
+}
+
+mutator {
+    id = "heat", name = "Heat", tags = { "stamina" }, loveOk = true,
+    desc = "It's hot in here. Stamina comes back twice as slowly.",
+    on = function(s) s.lastSM = nil end,
+    tick = function(s)
+        local p = getPawn(); if not p then return end
+        local sm = nil
+        pcall(function() sm = num(p["Sprint Meter"]) end)
+        if sm and s.lastSM and sm > s.lastSM then
+            sm = s.lastSM + (sm - s.lastSM) * 0.5
+            pcall(function() p["Sprint Meter"] = sm end)
+        end
+        s.lastSM = sm
+    end,
+    off = function(s) s.lastSM = nil end,
+}
+
+-- полная тьма на пару секунд: свет мигает — гаснет — глаза не видят ничего — привыкают
+BLIND = { every = { 35, 60 }, dur = { 2.0, 3.5 } }
+local function blindAlpha(a)
+    local b = UI.blind
+    if not valid(b) then return end
+    pcall(function() b:SetColorAndOpacity({ R = 0, G = 0, B = 0, A = a }) end)
+    pcall(function() b:SetVisibility(a > 0 and VIS_SHOW or VIS_HIDE) end)
+end
+mutator {
+    id = "blackouts", name = "Blackouts", tags = { "blind" }, chaos = false, loveOk = true,
+    desc = "Every so often the power cuts out completely - for a few seconds you see absolutely nothing.",
+    on = function(s)
+        s.gen = (s.gen or 0) + 1
+        s.next = (gameNow() or 0) + rnd(BLIND.every[1], BLIND.every[2]) * 0.6
+    end,
+    tick = function(s)
+        local g = gameNow() or 0
+        if g < s.next or UI.defeatOn or (UI.open and UI.kind ~= "lab") then return end
+        local dur = rnd(BLIND.dur[1], BLIND.dur[2])
+        s.next = g + dur + rnd(BLIND.every[1], BLIND.every[2])
+        local gen = s.gen
+        log(string.format("Blackouts: %.1f s of darkness", dur))
+        -- есть - нет - есть - нет... (мс от начала, непрозрачность)
+        local steps = { { 0, 1 }, { 90, 0 }, { 220, 1 }, { 300, 0 }, { 520, 1 } }
+        local t = 520 + dur * 1000
+        for i = 1, 10 do steps[#steps + 1] = { t + i * 80, 1 - i / 10 } end   -- глаза привыкают
+        for _, st in ipairs(steps) do
+            after(st[1], function()
+                if s.gen ~= gen or R.phase ~= "running" or UI.defeatOn then return end
+                blindAlpha(st[2])
+            end)
+        end
+    end,
+    off = function(s)
+        s.gen = (s.gen or 0) + 1
+        blindAlpha(0)
+    end,
+}
+
 -- экраны поражения, когда убила Року (у реактора и SUTEGOMA есть ещё свои сцены)
 do
     local L = {
@@ -690,6 +800,11 @@ do
         zoomies  = { "+ TOO FAST +", "She never even needed to catch her breath." },
         razor    = { "+ SHREDDED +", "Those claws were sharper than usual." },
         zerohour = { "+ SHE GOT YOU FIRST +", "The clock was ticking. She was faster." },
+        darkness = { "+ IN THE DARK +", "You never saw her coming." },
+        nohud    = { "+ BLIND GUESS +", "No numbers to warn you. She didn't need any." },
+        nohiding = { "+ NOWHERE TO GO +", "You looked for a place to hide. There wasn't one." },
+        heat     = { "+ OUT OF BREATH +", "The heat took your legs. She took the rest." },
+        blackouts = { "+ LIGHTS OUT +", "When your eyes adjusted, she was already there." },
     }
     for id, e in pairs(L) do
         if MUTS[id] then MUTS[id].lose = { title = e[1], sub = e[2], veil = e[3], color = e[4] } end
@@ -698,7 +813,8 @@ end
 
 -- порядок в меню: сначала мутаторы игрока, потом старые тестовые
 do
-    local want = { "reactor", "critical", "meltdown", "zerohour", "slippery", "sutegoma", "twins", "nofood", "zoomies", "razor" }
+    local want = { "reactor", "critical", "meltdown", "sutegoma", "zerohour", "darkness", "blackouts", "nohud", "nohiding",
+        "onehit", "heat", "slippery", "twins", "nofood", "zoomies", "razor" }
     local seen, order = {}, {}
     for _, id in ipairs(want) do if MUTS[id] then order[#order + 1] = id; seen[id] = true end end
     for _, id in ipairs(MUT_ORDER) do if not seen[id] then order[#order + 1] = id end end

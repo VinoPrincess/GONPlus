@@ -36,10 +36,11 @@ Updating: replace the `Scripts` folder, keep `settings.txt` and `records.txt` (y
 
 | Mode | |
 |---|---|
-| **Normal** | The game as it is: collect the apples and get out. |
+| **Normal** | The game as it is: collect the apples and get out. Without a mutator you pick the difficulty: Easy / Normal / Hard / **Nightmare** (Hard, plus no HUD, real darkness, one hit kills, no hiding spots, only a little trash and skulls to throw — and she hears you run). |
 | **Pure Stealth** | Roku doesn't hunt you — but if she *sees* you, it's over. No hiding. Running and thrown items make noise. 1–4 Rokus. |
 | **Bashful** | She can't see you, but she feels your gaze. She flickers in and out near you — ahead, behind, around the corner. Don't stare at her, don't come close. She never attacks. |
-| **Nightmare** | Almost impossible. No HUD, real darkness, one hit kills, no hiding spots, only a little trash and skulls to throw. She hears you run. |
+| **Reactor** | A countdown to the blast, three levels: **Failure** (30 min, flickering lights, red alarm at the end) · **Critical failure** (20 min, power failures plunge the complex into darkness) · **Meltdown** (17 min, red from the start, longer blackouts, heat slows stamina recovery, Roku gets faster in the last 3 minutes) |
+| **SUTEGOMA** | You are bleeding out: health slowly drains. More medkits around. |
 | **Lovesick** | Roku is drunk and very affectionate. Survive the timer (4–12 min). Every hug makes you fall for her — a full heart and you lose. Throw gifts at her to cool her down. |
 
 ## Mutators
@@ -48,10 +49,14 @@ One per run (or let fate decide).
 
 | Mutator | |
 |---|---|
-| **Reactor** | A countdown to the blast, three levels: **Failure** (30 min, flickering lights, red alarm at the end) · **Critical failure** (20 min, power failures plunge the complex into darkness) · **Meltdown** (17 min, red from the start, longer blackouts, heat slows stamina recovery, Roku gets faster in the last 3 minutes) |
 | **Zero Hour** | One minute on the clock. Every apple adds 20 seconds (2:30 at most) — the clock is always nearly empty. |
 | **Slippery Hands** | The item you hold slips out of your hands now and then. |
-| **SUTEGOMA** | You are bleeding out. More medkits around. |
+| **Darkness** | The lights are out. Your flashlight is all you've got. |
+| **Blackouts** | Every so often you see absolutely nothing for a few seconds. (Not in Chaos.) |
+| **No HUD** | No bars, no counter, no crosshair. |
+| **No Hiding** | The hiding spots don't work. |
+| **One Hit** | Her first hit is the last one. |
+| **Heat** | Stamina comes back twice as slowly. |
 | **Twins** | A second Roku roams the map. |
 | **No Food** | No apples, carrots, drinks or coffee — only trash to throw. |
 | **Zoomies** | Roku runs everywhere from the very start. |
@@ -94,5 +99,5 @@ This mod contains no game files. Licensed under the [MIT License](LICENSE).
 
 ### По-русски
 
-GON+ — мод для GON: God of Nothing: режимы (Pure Stealth, Nightmare, Lovesick), мутаторы и рекорды, без читов.
+GON+ — мод для GON: God of Nothing: режимы (Pure Stealth, Reactor, SUTEGOMA, Lovesick, Bashful), сложность Nightmare, мутаторы и рекорды, без читов.
 Установка: UE4SS (экспериментальная сборка) → распаковать архив из Releases или с [Nexus Mods](https://www.nexusmods.com/gongodofnothing/mods/5) в `...\Roku3\Binaries\Win64\ue4ss\Mods\`.
