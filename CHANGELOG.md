@@ -5,7 +5,10 @@
 - **Modes and mutators reorganised.** A mode changes the rules as a whole; a mutator changes one thing.
   - **Reactor** is now a mode (Mode: Reactor, then pick the level: Failure / Critical failure / Meltdown).
     Records are kept — they're the same as before.
-  - **SUTEGOMA** is now a mode too (records kept).
+  - **SUTEGOMA** is now a mode too (records kept), with a new rule by VinoPrincess: **running makes the bleeding worse.**
+    A *blood loss* meter fills as you burn stamina — use up the whole stamina bar in one go and it's full — and drains
+    a bit slower than stamina comes back. The fuller it is, the faster you bleed (up to 4× at full, "HEMORRHAGE").
+    You can still run — just not all the time.
   - **Nightmare** is now the fourth difficulty of the plain game: Normal mode, no mutator, Difficulty: Nightmare
     (needs Hard unlocked in the game). Records kept.
   - **New mutators** — they work on their own and in Chaos: **Darkness** (lights out), **No HUD**, **No Hiding**,

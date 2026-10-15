@@ -255,6 +255,22 @@ MUT_COLOR = {
     heat     = { R = 1.0, G = 0.55, B = 0.2 },
     blackouts = { R = 0.75, G = 0.75, B = 1.0 },
 }
+-- шкала сверху по центру (Bashful рисует свою копию; SUTEGOMA — кровопотеря): frac = nil — спрятать
+function topMeter(frac, label, col)
+    local m = UI.meter; if not m or not valid(m.fill) then return end
+    local show = frac ~= nil
+    for _, w in ipairs({ m.track, m.fill, m.text }) do
+        if valid(w) then pcall(function() w:SetVisibility(show and VIS_SHOW or VIS_HIDE) end) end
+    end
+    if not show then return end
+    col = col or GAME.blue
+    pcall(function() m.fillSlot:SetSize({ X = math.max(1, m.w * math.max(0, math.min(1, frac))), Y = m.h }) end)
+    local a = frac > 0.75 and (0.55 + 0.45 * math.abs(math.sin(os.clock() * 8))) or 1
+    pcall(function() m.fill:SetBrushColor({ R = col.R, G = col.G, B = col.B, A = a }) end)
+    setText(m.text, label or "")
+    setColor(m.text, { R = math.min(1, col.R + 0.2), G = math.min(1, col.G + 0.2), B = math.min(1, col.B + 0.2), A = 1 })
+end
+
 -- интерфейс спрятан: сложность Nightmare или мутатор No HUD
 function hudHidden()
     if R.phase == "none" then return false end
